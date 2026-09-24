@@ -1,0 +1,8 @@
+{
+  "type": "preload-native",
+  "name": "Redstone Tweaks Info",
+  "author": "TODO_YOUR_NAME",
+  "version": "0.0.1",
+  "entry": "libredstone_tweaks_mod.so",
+  "minecraft_versions": []
+}
