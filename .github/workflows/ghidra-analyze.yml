@@ -1,0 +1,49 @@
+name: Ghidra Analyze
+
+on:
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Download Ghidra
+        run: |
+          curl -L -o ghidra.zip https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.1.3_build/ghidra_12.1.3_PUBLIC_20260817.zip
+          unzip -q ghidra.zip
+
+      - name: Download target binary from this repo's release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download ghidra-binary --repo ${{ github.repository }} --pattern "libminecraftpe.so"
+
+      - name: Run headless analysis
+        run: |
+          mkdir -p proj
+          ./ghidra_12.1.3_PUBLIC/support/analyzeHeadless "$GITHUB_WORKSPACE/proj" RedstoneTweaksProj \
+            -import libminecraftpe.so \
+            -scriptPath "$GITHUB_WORKSPACE/ghidra_scripts" \
+            -preScript DisableHeavyAnalyzers.java \
+            -postScript FindStateRefs.java \
+            -deleteProject \
+            -max-cpu 2 \
+            > analyze.log 2>&1 || true
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: ghidra-results
+          path: |
+            state_refs_output.txt
+            analyze.log
+          if-no-files-found: warn
