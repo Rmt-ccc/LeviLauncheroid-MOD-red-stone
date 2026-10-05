@@ -1,0 +1,71 @@
+name: Ghidra Decompile Search
+
+# リポジトリの Actions タブ → このワークフロー → "Run workflow" から手動実行する。
+# so_path: リポジトリ内の libminecraftpe.so (または解析したい .so) への相対パス
+# search_terms: カンマ区切りの検索文字列(部分一致)。例: output_subtract_bit,comparator,subtract
+
+on:
+  workflow_dispatch:
+    inputs:
+      so_path:
+        description: "Repo-relative path to the .so file to analyze"
+        required: true
+        default: "bin/libminecraftpe.so"
+      search_terms:
+        description: "Comma-separated strings to search for (substring match)"
+        required: true
+        default: "output_subtract_bit,comparator,subtract"
+      timeout_seconds:
+        description: "Decompile timeout per function (seconds)"
+        required: false
+        default: "60"
+
+jobs:
+  decompile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Cache Ghidra
+        id: cache-ghidra
+        uses: actions/cache@v4
+        with:
+          path: ghidra
+          key: ghidra-11.1.2-PUBLIC
+
+      - name: Download Ghidra
+        if: steps.cache-ghidra.outputs.cache-hit != 'true'
+        run: |
+          curl -L -o ghidra.zip https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.1.2_build/ghidra_11.1.2_PUBLIC_20240709.zip
+          unzip -q ghidra.zip
+          mv ghidra_11.1.2_PUBLIC ghidra
+
+      - name: Verify target .so exists
+        run: |
+          if [ ! -f "${{ github.workspace }}/${{ inputs.so_path }}" ]; then
+            echo "::error::${{ inputs.so_path }} が見つかりません。リポジトリに配置するか so_path を見直してください。"
+            exit 1
+          fi
+
+      - name: Run Ghidra headless analysis
+        run: |
+          mkdir -p ghidra_project output
+          ghidra/support/analyzeHeadless \
+            ghidra_project ComparatorSearchProject \
+            -import "${{ github.workspace }}/${{ inputs.so_path }}" \
+            -postScript find_and_decompile.py "${{ inputs.search_terms }}" "${{ github.workspace }}/output/result.txt" "${{ inputs.timeout_seconds }}" \
+            -scriptPath "${{ github.workspace }}/scripts" \
+            -deleteProject
+
+      - name: Upload decompile result
+        uses: actions/upload-artifact@v4
+        with:
+          name: decompile-result
+          path: output/result.txt
