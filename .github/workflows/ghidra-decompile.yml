@@ -1,16 +1,21 @@
 name: Ghidra Decompile Search
 
 # リポジトリの Actions タブ → このワークフロー → "Run workflow" から手動実行する。
-# so_path: リポジトリ内の libminecraftpe.so (または解析したい .so) への相対パス
+# release_tag: .so が添付されている GitHub Release のタグ名 (例: v1.0.0)
+# asset_name: Release に添付されている .so ファイルのアセット名 (例: libminecraftpe.so)
 # search_terms: カンマ区切りの検索文字列(部分一致)。例: output_subtract_bit,comparator,subtract
 
 on:
   workflow_dispatch:
     inputs:
-      so_path:
-        description: "Repo-relative path to the .so file to analyze"
+      release_tag:
+        description: "Tag of the GitHub Release that contains the .so asset"
         required: true
-        default: "bin/libminecraftpe.so"
+        default: "latest"
+      asset_name:
+        description: "Asset file name of the .so attached to the release"
+        required: true
+        default: "libminecraftpe.so"
       search_terms:
         description: "Comma-separated strings to search for (substring match)"
         required: true
@@ -23,6 +28,8 @@ on:
 jobs:
   decompile:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -47,19 +54,35 @@ jobs:
           unzip -q ghidra.zip
           mv ghidra_11.1.2_PUBLIC ghidra
 
-      - name: Verify target .so exists
+      - name: Download .so from Release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if [ ! -f "${{ github.workspace }}/${{ inputs.so_path }}" ]; then
-            echo "::error::${{ inputs.so_path }} が見つかりません。リポジトリに配置するか so_path を見直してください。"
+          mkdir -p bin
+          if [ "${{ inputs.release_tag }}" = "latest" ]; then
+            gh release download --repo "${{ github.repository }}" \
+              --pattern "${{ inputs.asset_name }}" \
+              --output "bin/${{ inputs.asset_name }}"
+          else
+            gh release download "${{ inputs.release_tag }}" --repo "${{ github.repository }}" \
+              --pattern "${{ inputs.asset_name }}" \
+              --output "bin/${{ inputs.asset_name }}"
+          fi
+
+      - name: Verify downloaded .so exists
+        run: |
+          if [ ! -f "${{ github.workspace }}/bin/${{ inputs.asset_name }}" ]; then
+            echo "::error::bin/${{ inputs.asset_name }} が見つかりません。release_tag / asset_name を見直してください。"
             exit 1
           fi
+          ls -la "${{ github.workspace }}/bin/"
 
       - name: Run Ghidra headless analysis
         run: |
           mkdir -p ghidra_project output
           ghidra/support/analyzeHeadless \
             ghidra_project ComparatorSearchProject \
-            -import "${{ github.workspace }}/${{ inputs.so_path }}" \
+            -import "${{ github.workspace }}/bin/${{ inputs.asset_name }}" \
             -postScript find_and_decompile.py "${{ inputs.search_terms }}" "${{ github.workspace }}/output/result.txt" "${{ inputs.timeout_seconds }}" \
             -scriptPath "${{ github.workspace }}/scripts" \
             -deleteProject
