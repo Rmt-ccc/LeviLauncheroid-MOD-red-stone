@@ -36,6 +36,12 @@ public class FindStateRefs extends GhidraScript {
         "rail_data_bit",
         "triggered_bit",
         "orientation",
+        "honey_level",
+        "bite_counter",
+        "lever_direction",
+        "open_bit",
+        "respawn_anchor_charge",
+        "redstone_signal",
     };
 
     @Override
