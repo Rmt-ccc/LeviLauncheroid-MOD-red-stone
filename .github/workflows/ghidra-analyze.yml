@@ -1,49 +1,159 @@
-name: Ghidra Analyze
+// Ghidra headless post-script.
+//
+// For each target string below: finds it in Defined Strings, finds every
+// place in code that references it, and dumps the containing function's
+// name, address, and decompiled C-like pseudocode to an output text file
+// (state_refs_output.txt).
 
-on:
-  workflow_dispatch:
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
-jobs:
-  analyze:
-    runs-on: ubuntu-latest
-    timeout-minutes: 340
-    steps:
-      - uses: actions/checkout@v4
+import ghidra.app.decompiler.DecompInterface;
+import ghidra.app.decompiler.DecompileResults;
+import ghidra.app.script.GhidraScript;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.DataIterator;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceIterator;
+import ghidra.util.task.ConsoleTaskMonitor;
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
+public class FindStateRefs extends GhidraScript {
 
-      - name: Download Ghidra
-        run: |
-          curl -L -o ghidra.zip https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.1.3_build/ghidra_12.1.3_PUBLIC_20260817.zip
-          unzip -q ghidra.zip
+    private static final String[] TARGETS = {
+        "repeater_delay",
+        "output_subtract_bit",
+        "powered_bit",
+        "toggle_bit",
+        "fill_level",
+        "composter_fill_level",
+        "sculk_sensor_phase",
+        "attached_bit",
+        "disarmed_bit",
+        "rail_data_bit",
+        "triggered_bit",
+        "orientation",
+        "honey_level",
+        "bite_counter",
+        "lever_direction",
+        "open_bit",
+        "respawn_anchor_charge",
+        "redstone_signal",
+    };
 
-      - name: Download target binary from this repo's release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release download ghidra-binary --repo ${{ github.repository }} --pattern "libminecraftpe.so"
+    // Helper that writes a line to BOTH the output file and the headless
+    // stdout log (so results are readable straight from the Actions run
+    // page / step log, with no file download or unzip needed).
+    private PrintWriter out;
 
-      - name: Run headless analysis
-        run: |
-          mkdir -p proj
-          ./ghidra_12.1.3_PUBLIC/support/analyzeHeadless "$GITHUB_WORKSPACE/proj" RedstoneTweaksProj \
-            -import libminecraftpe.so \
-            -scriptPath "$GITHUB_WORKSPACE/ghidra_scripts" \
-            -preScript DisableHeavyAnalyzers.java \
-            -postScript FindStateRefs.java \
-            -deleteProject \
-            -max-cpu 2 \
-            2>&1 | tee analyze.log || true
+    private void emit(String line) {
+        out.println(line);
+        println(line); // GhidraScript.println -> headless stdout -> analyze.log
+    }
 
-      - name: Upload results
-        uses: actions/upload-artifact@v4
-        with:
-          name: ghidra-results
-          path: |
-            state_refs_output.txt
-            analyze.log
-          if-no-files-found: warn
+    @Override
+    protected void run() throws Exception {
+        out = new PrintWriter(new FileWriter("state_refs_output.txt"));
+        DecompInterface decomp = new DecompInterface();
+        decomp.openProgram(currentProgram);
+
+        // Cache decompiled output per function entry point so a function
+        // referenced many times (e.g. from a 16-case switch) is only
+        // decompiled and printed ONCE instead of once per reference.
+        Map<Address, String> decompCache = new LinkedHashMap<>();
+
+        for (String target : TARGETS) {
+            emit("========== STRING: " + target + " ==========");
+            List<Address> hits = findExactStringAddresses(target);
+            if (hits.isEmpty()) {
+                emit("  (not found as a defined string)");
+                emit("");
+                continue;
+            }
+            for (Address strAddr : hits) {
+                emit("  string data at " + strAddr);
+                ReferenceIterator refs = currentProgram.getReferenceManager()
+                        .getReferencesTo(strAddr);
+
+                // Group reference addresses by containing function first.
+                Map<Function, List<Address>> byFunction = new LinkedHashMap<>();
+                List<Address> noFunctionRefs = new ArrayList<>();
+                boolean any = false;
+                while (refs.hasNext()) {
+                    any = true;
+                    Reference ref = refs.next();
+                    Address from = ref.getFromAddress();
+                    Function fn = getFunctionContaining(from);
+                    if (fn == null) {
+                        noFunctionRefs.add(from);
+                    } else {
+                        byFunction.computeIfAbsent(fn, k -> new ArrayList<>()).add(from);
+                    }
+                }
+
+                for (Map.Entry<Function, List<Address>> e : byFunction.entrySet()) {
+                    Function fn = e.getKey();
+                    List<Address> froms = e.getValue();
+                    StringBuilder fromsStr = new StringBuilder();
+                    for (int i = 0; i < froms.size(); i++) {
+                        if (i > 0) fromsStr.append(", ");
+                        fromsStr.append(froms.get(i));
+                    }
+                    emit("    referenced from [" + fromsStr + "] (" + froms.size()
+                            + " call site(s))  in function " + fn.getName()
+                            + " @ " + fn.getEntryPoint());
+
+                    String decompiledText = decompCache.get(fn.getEntryPoint());
+                    if (decompiledText == null) {
+                        DecompileResults res = decomp.decompileFunction(fn, 60, new ConsoleTaskMonitor());
+                        if (res != null && res.decompileCompleted()) {
+                            decompiledText = res.getDecompiledFunction().getC();
+                        } else {
+                            decompiledText = "(decompile failed for " + fn.getName() + ")";
+                        }
+                        decompCache.put(fn.getEntryPoint(), decompiledText);
+                        emit("    ---- decompiled " + fn.getName() + " ----");
+                        emit(decompiledText);
+                        emit("    ---- end " + fn.getName() + " ----");
+                    } else {
+                        emit("    (decompiled " + fn.getName()
+                                + " already shown above for this run - not repeated)");
+                    }
+                }
+                for (Address from : noFunctionRefs) {
+                    emit("    referenced from " + from + "  (not inside a known function)");
+                }
+                if (!any) {
+                    emit("    (no references found to this string)");
+                }
+            }
+            emit("");
+            out.flush();
+        }
+
+        decomp.dispose();
+        out.close();
+        println("Done. Wrote state_refs_output.txt (also mirrored to stdout above)");
+    }
+
+    private List<Address> findExactStringAddresses(String target) throws Exception {
+        List<Address> results = new ArrayList<>();
+        DataIterator it = currentProgram.getListing().getDefinedData(true);
+        while (it.hasNext()) {
+            Data d = it.next();
+            if (!d.hasStringValue()) continue;
+            Object val = d.getValue();
+            if (val == null) continue;
+            String s = val.toString();
+            if (s.equals(target)) {
+                results.add(d.getAddress());
+            }
+        }
+        return results;
+    }
+}
