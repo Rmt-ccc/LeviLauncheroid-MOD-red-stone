@@ -55,3 +55,10 @@ functionality to begin with — this will require exploring
 offsets/signatures for the target Minecraft build (e.g. with Ghidra) since
 nothing like this currently exists in the public LeviLaunchroid mod
 ecosystem.
+
+## About Ghidra Analysis Data
+
+Ghidra Analysis Data:
+We used Ghidra to analyze the data in
+config.arm64_v8a.apk/lib/arm64-v8a/libminecraftpe.so
+from the Minecraft Trial xapk.
