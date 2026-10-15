@@ -134,7 +134,22 @@ public class FindStateRefs extends GhidraScript {
                         Address winStart = from.subtract(0x100);
                         Address winEnd = from.add(0x100);
                         AddressSet window = new AddressSet(winStart, winEnd);
-                        disassemble(window);
+                        // FlatProgramAPI.disassemble() only takes a single Address,
+                        // not an AddressSetView - step through the window 4 bytes
+                        // at a time (AArch64 instructions are fixed 4-byte width).
+                        Address a = winStart;
+                        while (a != null && a.compareTo(winEnd) <= 0) {
+                            try {
+                                disassemble(a);
+                            } catch (Exception ignore) {
+                                // already code, or not a valid instruction start - skip
+                            }
+                            try {
+                                a = a.add(4);
+                            } catch (Exception overflow) {
+                                break; // hit the end of the address space
+                            }
+                        }
                         InstructionIterator insns = currentProgram.getListing()
                                 .getInstructions(window, true);
                         while (insns.hasNext()) {
