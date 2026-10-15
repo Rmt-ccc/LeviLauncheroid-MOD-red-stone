@@ -28,20 +28,29 @@ import ghidra.util.task.ConsoleTaskMonitor;
 
 public class FindStateRefs extends GhidraScript {
 
-    // Only the still-unresolved targets from the previous run (the rest
-    // are already fully analyzed - no need to spend time re-decompiling
-    // them). "orientation" is dropped: it was too generic and mostly
-    // matched unrelated Android-side code, not block states.
+    // Only the targets that still weren't usefully resolved after the
+    // previous run (bite_counter and respawn_anchor_charge already gave
+    // clean results from the raw-disassembly fallback - no need to spend
+    // time on them again; honey_level/open_bit aren't defined strings at
+    // all, so re-checking them is instant and harmless but left out here
+    // to keep the run focused).
     private static final String[] TARGETS = {
         "composter_fill_level",
         "sculk_sensor_phase",
-        "bite_counter",
         "lever_direction",
-        "respawn_anchor_charge",
         "redstone_signal",
-        "honey_level",
-        "open_bit",
     };
+
+    // Every real function body in this binary starts with a call to this
+    // fixed helper address (confirmed across multiple prior samples -
+    // repeater/comparator/etc. decompiles all showed the stack-canary
+    // setup pattern, and the raw-disassembly dumps from the last run show
+    // "bl 0x0e656420" as the first instruction of every function that has
+    // one). When Ghidra's auto-analysis missed a function (no Function
+    // object at a reference site), we scan backward for the nearest one
+    // of these calls and treat it as the function's entry point, then
+    // force Ghidra to define a Function there so the decompiler can run.
+    private static final long FUNC_PROLOGUE_MARKER_OFFSET = 0x0e656420L;
 
     // Helper that writes a line to BOTH the output file and the headless
     // stdout log (so results are readable straight from the Actions run
@@ -60,9 +69,12 @@ public class FindStateRefs extends GhidraScript {
         decomp.openProgram(currentProgram);
 
         // Cache decompiled output per function entry point so a function
-        // referenced many times (e.g. from a 16-case switch) is only
-        // decompiled and printed ONCE instead of once per reference.
+        // referenced many times (e.g. from a 16-case switch, or from many
+        // call sites sharing one function) is only decompiled and printed
+        // ONCE instead of once per reference.
         Map<Address, String> decompCache = new LinkedHashMap<>();
+
+        Address marker = toAddr(FUNC_PROLOGUE_MARKER_OFFSET);
 
         for (String target : TARGETS) {
             emit("========== STRING: " + target + " ==========");
@@ -86,6 +98,12 @@ public class FindStateRefs extends GhidraScript {
                     Reference ref = refs.next();
                     Address from = ref.getFromAddress();
                     Function fn = getFunctionContaining(from);
+                    if (fn == null) {
+                        // Try to recover a function boundary by locating the
+                        // nearest preceding prologue-marker call and forcing
+                        // Ghidra to define a Function starting there.
+                        fn = tryForceCreateFunction(from, marker);
+                    }
                     if (fn == null) {
                         noFunctionRefs.add(from);
                     } else {
@@ -122,21 +140,18 @@ public class FindStateRefs extends GhidraScript {
                                 + " already shown above for this run - not repeated)");
                     }
                 }
-                // No Function object covers these reference sites, so the
-                // decompiler can't be used (it needs a Function). Fall back
-                // to dumping a raw disassembly window around each address -
-                // that's enough to read the aux-value branching logic by
-                // hand, same as we'd get from a decompile.
+                // Still no Function object for these (no prologue marker
+                // found within the search range either) - fall back to a
+                // raw disassembly window around each address so there's at
+                // least something to read by hand.
                 for (Address from : noFunctionRefs) {
                     emit("    referenced from " + from
-                            + "  (not inside a known function - raw disassembly window below)");
+                            + "  (not inside a known function, no prologue marker found either"
+                            + " - raw disassembly window below)");
                     try {
                         Address winStart = from.subtract(0x100);
                         Address winEnd = from.add(0x100);
                         AddressSet window = new AddressSet(winStart, winEnd);
-                        // FlatProgramAPI.disassemble() only takes a single Address,
-                        // not an AddressSetView - step through the window 4 bytes
-                        // at a time (AArch64 instructions are fixed 4-byte width).
                         Address a = winStart;
                         while (a != null && a.compareTo(winEnd) <= 0) {
                             try {
@@ -171,6 +186,85 @@ public class FindStateRefs extends GhidraScript {
         decomp.dispose();
         out.close();
         println("Done. Wrote state_refs_output.txt (also mirrored to stdout above)");
+    }
+
+    // Scans backward from `from` for the nearest "bl <marker>" instruction
+    // (AArch64 instructions are fixed 4-byte width, so step by 4), treats
+    // that instruction's address as a function entry point, and asks
+    // Ghidra to define a Function there. Returns the resulting Function,
+    // or null if no marker was found within the search range or function
+    // creation failed.
+    private Function tryForceCreateFunction(Address from, Address marker) {
+        final int maxBackBytes = 0x4000;
+        final int maxForwardDisasmBytes = 0x3000;
+        try {
+            Address searchStart = from.subtract(maxBackBytes);
+            Address a = from;
+            Address foundEntry = null;
+            while (a.compareTo(searchStart) >= 0) {
+                // Make sure this address is disassembled so we can inspect
+                // it as an instruction; skip addresses that already are
+                // (common once a neighboring reference has covered them).
+                Instruction insn = currentProgram.getListing().getInstructionAt(a);
+                if (insn == null) {
+                    try {
+                        disassemble(a);
+                        insn = currentProgram.getListing().getInstructionAt(a);
+                    } catch (Exception ignore) {
+                        insn = null;
+                    }
+                }
+                if (insn != null && "bl".equals(insn.getMnemonicString())) {
+                    Address[] flows = insn.getFlows();
+                    if (flows != null) {
+                        for (Address flow : flows) {
+                            if (flow.equals(marker)) {
+                                foundEntry = a;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (foundEntry != null) break;
+                try {
+                    a = a.subtract(4);
+                } catch (Exception overflow) {
+                    break; // hit the start of the address space
+                }
+            }
+
+            if (foundEntry == null) {
+                return null;
+            }
+
+            // Disassemble forward from the recovered entry point so Ghidra
+            // has enough code in the listing to compute the function body,
+            // then define the function.
+            Address fwdEnd = foundEntry.add(maxForwardDisasmBytes);
+            Address d = foundEntry;
+            while (d != null && d.compareTo(fwdEnd) <= 0) {
+                if (currentProgram.getListing().getInstructionAt(d) == null) {
+                    try {
+                        disassemble(d);
+                    } catch (Exception ignore) {
+                        // fine - might be data or already covered
+                    }
+                }
+                try {
+                    d = d.add(4);
+                } catch (Exception overflow) {
+                    break;
+                }
+            }
+
+            Function fn = currentProgram.getListing().getFunctionAt(foundEntry);
+            if (fn == null) {
+                fn = createFunction(foundEntry, null);
+            }
+            return fn;
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     private List<Address> findExactStringAddresses(String target) throws Exception {
