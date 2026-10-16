@@ -76,6 +76,23 @@ public class FindStateRefs extends GhidraScript {
 
         Address marker = toAddr(FUNC_PROLOGUE_MARKER_OFFSET);
 
+        // The forced function creation below kept collapsing into a
+        // trivial "thunk_FUN_08603160() { thunk_FUN_08603160(); }" stub
+        // for every target. Root cause: whatever is at the marker address
+        // (or what it thunks to) is flagged NO RETURN in this program -
+        // likely a bad auto-analysis artifact from the broken exception-
+        // handler tables we saw earlier. With the first instruction of a
+        // forced function being a call to something marked no-return,
+        // Ghidra's flow analysis assumes execution can't continue past
+        // it, so the "function" it creates is just that one instruction -
+        // which then LOOKS like / gets named as a thunk. Clearing the
+        // no-return flag on the marker (and anything it thunks to) lets
+        // flow analysis continue past the call into the real function
+        // body, same as it must for all the OTHER functions that already
+        // decompiled cleanly (their decompiler output just hides this
+        // call as the elided stack-canary-style prologue).
+        clearNoReturnChain(marker);
+
         for (String target : TARGETS) {
             emit("========== STRING: " + target + " ==========");
             List<Address> hits = findExactStringAddresses(target);
@@ -188,6 +205,37 @@ public class FindStateRefs extends GhidraScript {
         println("Done. Wrote state_refs_output.txt (also mirrored to stdout above)");
     }
 
+    // Clears the "does not return" flag on whatever Function exists at
+    // `addr`, following the thunk chain (a thunk may itself point at
+    // another thunk) up to a safety limit. Also forces a Function to
+    // exist at `addr` if none does yet, so there is something to clear.
+    private void clearNoReturnChain(Address addr) {
+        try {
+            Function fn = currentProgram.getListing().getFunctionAt(addr);
+            if (fn == null) {
+                try {
+                    fn = createFunction(addr, null);
+                } catch (Exception ignore) {
+                    fn = null;
+                }
+            }
+            int guard = 0;
+            while (fn != null && guard++ < 10) {
+                if (fn.hasNoReturn()) {
+                    fn.setNoReturn(false);
+                    println("Cleared no-return flag on " + fn.getName() + " @ " + fn.getEntryPoint());
+                }
+                if (fn.isThunk()) {
+                    fn = fn.getThunkedFunction(false);
+                } else {
+                    break;
+                }
+            }
+        } catch (Exception ex) {
+            println("clearNoReturnChain failed: " + ex.getMessage());
+        }
+    }
+
     // Scans backward from `from` for the nearest "bl <marker>" instruction
     // (AArch64 instructions are fixed 4-byte width, so step by 4), treats
     // that instruction's address as a function entry point, and asks
@@ -260,6 +308,30 @@ public class FindStateRefs extends GhidraScript {
             Function fn = currentProgram.getListing().getFunctionAt(foundEntry);
             if (fn == null) {
                 fn = createFunction(foundEntry, null);
+            }
+
+            // Safety net: if this STILL came back as a trivial thunk whose
+            // body is only the single "bl marker" instruction (the bug we
+            // saw before clearNoReturnChain() existed - or a recurrence of
+            // it for some other reason), blow it away and rebuild the
+            // function with an EXPLICIT body spanning everything we just
+            // disassembled, bypassing Ghidra's flow-based body computation
+            // (and its thunk auto-detection) entirely.
+            if (fn != null && (fn.isThunk() || fn.getBody().getNumAddresses() <= 4)) {
+                try {
+                    currentProgram.getListing().removeFunction(foundEntry);
+                } catch (Exception ignore) {
+                    // ignore - may not have existed as a plain function
+                }
+                AddressSet body = new AddressSet();
+                InstructionIterator insns = currentProgram.getListing()
+                        .getInstructions(new AddressSet(foundEntry, fwdEnd), true);
+                while (insns.hasNext()) {
+                    Instruction insn = insns.next();
+                    body.add(insn.getMinAddress(), insn.getMaxAddress());
+                }
+                fn = currentProgram.getListing().createFunction(
+                        null, foundEntry, body, ghidra.program.model.symbol.SourceType.USER_DEFINED);
             }
             return fn;
         } catch (Exception ex) {
