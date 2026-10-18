@@ -40,7 +40,7 @@ jobs:
             -postScript FindStateRefs.java \
             -deleteProject \
             -max-cpu 2 \
-            -analysisTimeoutPerFile 900 \
+            -analysisTimeoutPerFile 1500 \
             2>&1 | tee analyze.log || true
 
       - name: Upload results

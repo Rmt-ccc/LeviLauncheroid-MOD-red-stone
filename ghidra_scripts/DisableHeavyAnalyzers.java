@@ -24,6 +24,18 @@ public class DisableHeavyAnalyzers extends GhidraScript {
         // aux-value branching logic out of a handful of functions.
         "call-fixup",
         "call fixup",
+        // With Call-Fixup Installer gone, THESE three ate the rest of
+        // the 900s budget instead (247 + 225 + 25 secs, per the timing
+        // report) - still leaving no time for ASCII Strings (which our
+        // whole approach depends on: findExactStringAddresses() needs
+        // the target strings to already be defined as string data).
+        // None of these three matter for our narrow goal: we only read
+        // a handful of specific functions by hand via the decompiler
+        // (not a full switch-statement recovery pass) and don't rely
+        // on automatic non-return/shared-return-call detection.
+        "non-returning functions - discovered",
+        "decompiler switch analysis",
+        "shared return calls",
     };
 
     @Override
