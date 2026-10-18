@@ -37,6 +37,7 @@ jobs:
             -postScript FindStateRefs.java \
             -deleteProject \
             -max-cpu 2 \
+            -noanalysis \
             2>&1 | tee analyze.log || true
 
       - name: Upload results
