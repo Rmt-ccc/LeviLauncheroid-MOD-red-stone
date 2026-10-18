@@ -1,7 +1,4 @@
-7__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 1411fec8 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 1411ff30 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 1411ff58 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
+ionHandler)  
 WARN  EXTERNAL Data ELF Relocation with offset: at 1411ffd8 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
 WARN  EXTERNAL Data ELF Relocation with offset: at 14120058 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
 WARN  EXTERNAL Data ELF Relocation with offset: at 14120160 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
@@ -13322,6 +13319,7 @@ Resolving External Symbols of [/libminecraftpe.so] - 954 unresolved symbols, no 
 INFO  IMPORTING: Loaded 0 additional files (HeadlessAnalyzer)  
 INFO  REPORT: Execute script: DisableHeavyAnalyzers.java  (HeadlessAnalyzer)  
 INFO  SCRIPT: /home/runner/work/LeviLauncheroid-MOD-red-stone/LeviLauncheroid-MOD-red-stone/ghidra_scripts/DisableHeavyAnalyzers.java (HeadlessAnalyzer)  
+INFO  DisableHeavyAnalyzers.java> Disabled analyzer option: Call-Fixup Installer (GhidraScript)  
 INFO  DisableHeavyAnalyzers.java> Disabled analyzer option: GCC Exception Handlers (GhidraScript)  
 INFO  DisableHeavyAnalyzers.java> Disabled analyzer option: GCC Exception Handlers.Create Try Catch Comments (GhidraScript)  
 INFO  ANALYZING all memory and code: file:///home/runner/work/LeviLauncheroid-MOD-red-stone/LeviLauncheroid-MOD-red-stone/libminecraftpe.so (HeadlessAnalyzer)  
@@ -13333,21 +13331,27 @@ ERROR Invalid GIF data at 02434693 (GifDataType)
 ERROR Invalid PNG data at 02679800 (PngDataType)  
 ERROR Invalid PNG data at 027e8be0 (PngDataType)  
 INFO  -----------------------------------------------------
-    AARCH64 ELF PLT Thunks                     7.331 secs
-    Call-Fixup Installer                     737.987 secs
-    Create Function                            3.433 secs
-    DWARF                                      0.010 secs
-    Disassemble Entry Points                 144.674 secs
-    Embedded Media                             2.003 secs
-    Non-Returning Functions - Known            0.414 secs
-    Subroutine References                      4.137 secs
+    AARCH64 ELF PLT Thunks                    10.290 secs
+    Create Function                           11.900 secs
+    DWARF                                      0.015 secs
+    Decompiler Switch Analysis               225.539 secs
+    Disassemble                              180.191 secs
+    Disassemble Entry Points                 172.249 secs
+    Embedded Media                             2.381 secs
+    External Entry References                  1.300 secs
+    Function Start Search                     13.345 secs
+    Non-Returning Functions - Discovered     247.435 secs
+    Non-Returning Functions - Known            0.465 secs
+    Shared Return Calls                       24.773 secs
+    Subroutine References                     10.190 secs
 -----------------------------------------------------
-     Total Time   899 secs
+     Total Time   900 secs
 -----------------------------------------------------
  (AutoAnalysisManager)  
 ERROR REPORT: Analysis timed out at 900 seconds. Processing not completed for file: file:///home/runner/work/LeviLauncheroid-MOD-red-stone/LeviLauncheroid-MOD-red-stone/libminecraftpe.so (HeadlessAnalyzer)  
 INFO  REPORT: Execute script: FindStateRefs.java  (HeadlessAnalyzer)  
 INFO  SCRIPT: /home/runner/work/LeviLauncheroid-MOD-red-stone/LeviLauncheroid-MOD-red-stone/ghidra_scripts/FindStateRefs.java (HeadlessAnalyzer)  
+INFO  FindStateRefs.java> Cleared no-return flag on thunk_FUN_08603160 @ 0e656420 (GhidraScript)  
 INFO  FindStateRefs.java> ========== STRING: composter_fill_level ========== (GhidraScript)  
 INFO  FindStateRefs.java>   (not found as a defined string) (GhidraScript)  
 INFO  FindStateRefs.java>  (GhidraScript)  
