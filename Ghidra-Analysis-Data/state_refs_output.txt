@@ -1,0 +1,12 @@
+========== STRING: composter_fill_level ==========
+  (not found as a defined string)
+
+========== STRING: sculk_sensor_phase ==========
+  (not found as a defined string)
+
+========== STRING: lever_direction ==========
+  (not found as a defined string)
+
+========== STRING: redstone_signal ==========
+  (not found as a defined string)
+
