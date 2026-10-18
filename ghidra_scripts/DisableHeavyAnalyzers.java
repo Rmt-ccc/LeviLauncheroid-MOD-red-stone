@@ -16,6 +16,14 @@ public class DisableHeavyAnalyzers extends GhidraScript {
     private static final String[] DISABLE_IF_NAME_CONTAINS = {
         "exception handler",
         "exception handling",
+        // Observed eating 738 of a 900-second analysis budget on this
+        // binary (per-analyzer timing report), starving out later,
+        // more important analyzers (like ASCII Strings) before the
+        // per-file analysis timeout hit. We don't need call-fixup
+        // matching (library call-convention patching) for reading
+        // aux-value branching logic out of a handful of functions.
+        "call-fixup",
+        "call fixup",
     };
 
     @Override
