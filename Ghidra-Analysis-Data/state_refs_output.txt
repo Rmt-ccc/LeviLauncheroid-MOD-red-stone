@@ -1,12 +1,19 @@
+Building adrp+add/ldr/str reference index over the whole program (one pass)...
+Index built: 483936 distinct target addresses materialized in code.
+
 ========== STRING: composter_fill_level ==========
-  (not found as a defined string)
+  string data at 0244c11d
+    (no code references found materializing this address)
 
 ========== STRING: sculk_sensor_phase ==========
-  (not found as a defined string)
+  string data at 0242a680
+    (no code references found materializing this address)
 
 ========== STRING: lever_direction ==========
-  (not found as a defined string)
+  string data at 02293796
+    (no code references found materializing this address)
 
 ========== STRING: redstone_signal ==========
-  (not found as a defined string)
+  string data at 022f76cb
+    (no code references found materializing this address)
 
