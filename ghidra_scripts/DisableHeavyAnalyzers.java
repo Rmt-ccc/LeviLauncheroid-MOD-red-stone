@@ -1,67 +1,64 @@
 // Ghidra headless PRE-script (runs after import, before auto-analysis).
-// Disables memory-hungry analyzers we don't need for finding string
-// cross-references and decompiling a handful of functions - in
-// particular the GCC Exception Handler analyzer, which was causing
-// OutOfMemoryError on this large binary by building huge LSDA/reference
-// tables we never use.
+//
+// We went through several rounds of disabling one slow/broken analyzer
+// at a time (GCC Exception Handlers, Call-Fixup Installer, Non-Returning
+// Functions - Discovered, Decompiler Switch Analysis, Shared Return
+// Calls, Basic Constant Reference Analyzer) only to have a DIFFERENT
+// data-flow analyzer (Call Convention ID) become the new one that eats
+// the entire per-file analysis timeout on this unusually large binary.
+// This is whack-a-mole: on a binary this size, pretty much any analyzer
+// that does real data-flow/constant-propagation work is going to take
+// an enormous amount of time (or run into the same "VarnodeContext: out
+// of address spaces" NEON/vector-register bug).
+//
+// So instead of a denylist, this is now an ALLOWLIST: disable every
+// analyzer EXCEPT the handful we actually need. We only need enough to
+// (a) disassemble code and recover function boundaries, and (b) let
+// FindStateRefs.java's own manual ADRP+ADD/LDR scan find string
+// references itself, without relying on Ghidra's reference/constant-
+// propagation analyzers at all.
+public class DisableHeavyAnalyzers extends ghidra.app.script.GhidraScript {
 
-import ghidra.app.script.GhidraScript;
-import ghidra.framework.options.Options;
-import ghidra.program.model.listing.Program;
-
-import java.util.List;
-
-public class DisableHeavyAnalyzers extends GhidraScript {
-
-    private static final String[] DISABLE_IF_NAME_CONTAINS = {
-        "exception handler",
-        "exception handling",
-        // Observed eating 738 of a 900-second analysis budget on this
-        // binary (per-analyzer timing report), starving out later,
-        // more important analyzers (like ASCII Strings) before the
-        // per-file analysis timeout hit. We don't need call-fixup
-        // matching (library call-convention patching) for reading
-        // aux-value branching logic out of a handful of functions.
-        "call-fixup",
-        "call fixup",
-        // With Call-Fixup Installer gone, THESE three ate the rest of
-        // the 900s budget instead (247 + 225 + 25 secs, per the timing
-        // report) - still leaving no time for ASCII Strings (which our
-        // whole approach depends on: findExactStringAddresses() needs
-        // the target strings to already be defined as string data).
-        // None of these three matter for our narrow goal: we only read
-        // a handful of specific functions by hand via the decompiler
-        // (not a full switch-statement recovery pass) and don't rely
-        // on automatic non-return/shared-return-call detection.
-        "non-returning functions - discovered",
-        "decompiler switch analysis",
-        "shared return calls",
-        // THE actual culprit, finally identified via the per-analyzer
-        // timing report: Basic Constant Reference Analyzer took 982 of
-        // the 1500-second budget, and is also the source of the
-        // "VarnodeContext: out of address spaces at @X for: dN-X"
-        // error spam seen in every prior run (it chokes on this
-        // binary's NEON/vector register usage). Disabling it should
-        // finally leave the budget free for ASCII Strings to run.
-        "constant reference",
+    private static final String[] KEEP_ENABLED_IF_NAME_CONTAINS = {
+        "disassemble",                 // "Disassemble", "Disassemble Entry Points"
+        "function start search",
+        "create function",
+        "ascii strings",
+        "non-returning functions - known",
+        "aarch64 elf plt thunks",
+        "dwarf",                       // near-instant here anyway (DWARF not found)
     };
 
     @Override
     protected void run() throws Exception {
-        Options analysisOptions = currentProgram.getOptions(Program.ANALYSIS_PROPERTIES);
-        List<String> names = analysisOptions.getOptionNames();
+        ghidra.framework.options.Options analysisOptions =
+                currentProgram.getOptions(ghidra.program.model.listing.Program.ANALYSIS_PROPERTIES);
+        java.util.List<String> names = analysisOptions.getOptionNames();
         for (String name : names) {
+            // Skip sub-options (e.g. "GCC Exception Handlers.Create Try
+            // Catch Comments") - they're irrelevant once their parent
+            // analyzer is disabled, and most aren't plain booleans
+            // anyway so trying to flip them just adds log noise.
+            if (name.contains(".")) {
+                continue;
+            }
             String lower = name.toLowerCase();
-            for (String match : DISABLE_IF_NAME_CONTAINS) {
-                if (lower.contains(match)) {
-                    try {
-                        analysisOptions.setBoolean(name, false);
-                        println("Disabled analyzer option: " + name);
-                    } catch (Exception e) {
-                        println("Could not disable: " + name + " (" + e.getMessage() + ")");
-                    }
+            boolean keep = false;
+            for (String allow : KEEP_ENABLED_IF_NAME_CONTAINS) {
+                if (lower.contains(allow)) {
+                    keep = true;
                     break;
                 }
+            }
+            if (keep) {
+                println("Keeping analyzer enabled: " + name);
+                continue;
+            }
+            try {
+                analysisOptions.setBoolean(name, false);
+                println("Disabled analyzer: " + name);
+            } catch (Exception e) {
+                // Not a plain boolean option (or already off) - harmless.
             }
         }
     }

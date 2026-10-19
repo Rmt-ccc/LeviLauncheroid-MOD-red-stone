@@ -1,13 +1,20 @@
 // Ghidra headless post-script.
 //
-// For each target string below: finds it in Defined Strings, finds every
-// place in code that references it, and dumps the containing function's
-// name, address, and decompiled C-like pseudocode to an output text file
-// (state_refs_output.txt).
+// For each target string below: finds it directly in raw memory bytes
+// (no dependency on the ASCII Strings analyzer or Defined Data), finds
+// every place in code that references it via our OWN manual AArch64
+// "adrp + add/ldr/str" pattern scan (no dependency on Ghidra's
+// Reference / Constant Reference / Call Convention ID analyzers - all
+// of which turned out to be too slow/broken on this huge binary, each
+// one in turn eating the entire per-file analysis timeout), and dumps
+// the containing function's name, address, and decompiled C-like
+// pseudocode to an output text file (state_refs_output.txt).
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,23 +24,17 @@ import ghidra.app.decompiler.DecompileResults;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.listing.DataIterator;
-import ghidra.program.model.listing.Data;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.InstructionIterator;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.ReferenceIterator;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.scalar.Scalar;
 import ghidra.util.task.ConsoleTaskMonitor;
 
 public class FindStateRefs extends GhidraScript {
 
-    // Only the targets that still weren't usefully resolved after the
-    // previous run (bite_counter and respawn_anchor_charge already gave
-    // clean results from the raw-disassembly fallback - no need to spend
-    // time on them again; honey_level/open_bit aren't defined strings at
-    // all, so re-checking them is instant and harmless but left out here
-    // to keep the run focused).
     private static final String[] TARGETS = {
         "composter_fill_level",
         "sculk_sensor_phase",
@@ -42,19 +43,11 @@ public class FindStateRefs extends GhidraScript {
     };
 
     // Every real function body in this binary starts with a call to this
-    // fixed helper address (confirmed across multiple prior samples -
-    // repeater/comparator/etc. decompiles all showed the stack-canary
-    // setup pattern, and the raw-disassembly dumps from the last run show
-    // "bl 0x0e656420" as the first instruction of every function that has
-    // one). When Ghidra's auto-analysis missed a function (no Function
-    // object at a reference site), we scan backward for the nearest one
-    // of these calls and treat it as the function's entry point, then
-    // force Ghidra to define a Function there so the decompiler can run.
+    // fixed helper address. When a reference site isn't already inside a
+    // known Function, we scan backward for the nearest one of these
+    // calls and treat it as the function's entry point.
     private static final long FUNC_PROLOGUE_MARKER_OFFSET = 0x0e656420L;
 
-    // Helper that writes a line to BOTH the output file and the headless
-    // stdout log (so results are readable straight from the Actions run
-    // page / step log, with no file download or unzip needed).
     private PrintWriter out;
 
     private void emit(String line) {
@@ -68,57 +61,33 @@ public class FindStateRefs extends GhidraScript {
         DecompInterface decomp = new DecompInterface();
         decomp.openProgram(currentProgram);
 
-        // Cache decompiled output per function entry point so a function
-        // referenced many times (e.g. from a 16-case switch, or from many
-        // call sites sharing one function) is only decompiled and printed
-        // ONCE instead of once per reference.
         Map<Address, String> decompCache = new LinkedHashMap<>();
-
         Address marker = toAddr(FUNC_PROLOGUE_MARKER_OFFSET);
-
-        // The forced function creation below kept collapsing into a
-        // trivial "thunk_FUN_08603160() { thunk_FUN_08603160(); }" stub
-        // for every target. Root cause: whatever is at the marker address
-        // (or what it thunks to) is flagged NO RETURN in this program -
-        // likely a bad auto-analysis artifact from the broken exception-
-        // handler tables we saw earlier. With the first instruction of a
-        // forced function being a call to something marked no-return,
-        // Ghidra's flow analysis assumes execution can't continue past
-        // it, so the "function" it creates is just that one instruction -
-        // which then LOOKS like / gets named as a thunk. Clearing the
-        // no-return flag on the marker (and anything it thunks to) lets
-        // flow analysis continue past the call into the real function
-        // body, same as it must for all the OTHER functions that already
-        // decompiled cleanly (their decompiler output just hides this
-        // call as the elided stack-canary-style prologue).
         clearNoReturnChain(marker);
+
+        emit("Building adrp+add/ldr/str reference index over the whole program (one pass)...");
+        Map<Long, List<Address>> refIndex = buildAdrpReferenceIndex();
+        emit("Index built: " + refIndex.size() + " distinct target addresses materialized in code.");
+        emit("");
 
         for (String target : TARGETS) {
             emit("========== STRING: " + target + " ==========");
             List<Address> hits = findExactStringAddresses(target);
             if (hits.isEmpty()) {
-                emit("  (not found as a defined string)");
+                emit("  (not found as raw bytes in any initialized memory block)");
                 emit("");
                 continue;
             }
             for (Address strAddr : hits) {
                 emit("  string data at " + strAddr);
-                ReferenceIterator refs = currentProgram.getReferenceManager()
-                        .getReferencesTo(strAddr);
+                List<Address> refs = refIndex.get(strAddr.getOffset());
+                if (refs == null) refs = new ArrayList<>();
 
-                // Group reference addresses by containing function first.
                 Map<Function, List<Address>> byFunction = new LinkedHashMap<>();
                 List<Address> noFunctionRefs = new ArrayList<>();
-                boolean any = false;
-                while (refs.hasNext()) {
-                    any = true;
-                    Reference ref = refs.next();
-                    Address from = ref.getFromAddress();
+                for (Address from : refs) {
                     Function fn = getFunctionContaining(from);
                     if (fn == null) {
-                        // Try to recover a function boundary by locating the
-                        // nearest preceding prologue-marker call and forcing
-                        // Ghidra to define a Function starting there.
                         fn = tryForceCreateFunction(from, marker);
                     }
                     if (fn == null) {
@@ -157,31 +126,13 @@ public class FindStateRefs extends GhidraScript {
                                 + " already shown above for this run - not repeated)");
                     }
                 }
-                // Still no Function object for these (no prologue marker
-                // found within the search range either) - fall back to a
-                // raw disassembly window around each address so there's at
-                // least something to read by hand.
                 for (Address from : noFunctionRefs) {
                     emit("    referenced from " + from
-                            + "  (not inside a known function, no prologue marker found either"
-                            + " - raw disassembly window below)");
+                            + "  (no Function recoverable here - raw disassembly window below)");
                     try {
-                        Address winStart = from.subtract(0x100);
-                        Address winEnd = from.add(0x100);
+                        Address winStart = from.subtract(0x40);
+                        Address winEnd = from.add(0x40);
                         AddressSet window = new AddressSet(winStart, winEnd);
-                        Address a = winStart;
-                        while (a != null && a.compareTo(winEnd) <= 0) {
-                            try {
-                                disassemble(a);
-                            } catch (Exception ignore) {
-                                // already code, or not a valid instruction start - skip
-                            }
-                            try {
-                                a = a.add(4);
-                            } catch (Exception overflow) {
-                                break; // hit the end of the address space
-                            }
-                        }
                         InstructionIterator insns = currentProgram.getListing()
                                 .getInstructions(window, true);
                         while (insns.hasNext()) {
@@ -192,8 +143,8 @@ public class FindStateRefs extends GhidraScript {
                         emit("      (failed to disassemble window: " + ex.getMessage() + ")");
                     }
                 }
-                if (!any) {
-                    emit("    (no references found to this string)");
+                if (refs.isEmpty()) {
+                    emit("    (no code references found materializing this address)");
                 }
             }
             emit("");
@@ -205,10 +156,89 @@ public class FindStateRefs extends GhidraScript {
         println("Done. Wrote state_refs_output.txt (also mirrored to stdout above)");
     }
 
+    // One linear pass over every already-disassembled instruction in the
+    // program, tracking "adrp Xd, #page" sightings per register and
+    // matching them against a following "add Xd, Xn, #imm" or
+    // "ldr/str Xt, [Xn, #imm]" that completes the full address. Returns a
+    // map from fully-materialized address (as a raw offset) to every
+    // instruction address that materializes it. This replaces Ghidra's
+    // own Reference/Constant-Reference/Call-Convention-ID analyzers,
+    // which were each in turn too slow (or outright broken on this
+    // binary's NEON usage) to finish within any reasonable timeout.
+    private Map<Long, List<Address>> buildAdrpReferenceIndex() {
+        Map<Long, List<Address>> result = new HashMap<>();
+        Map<String, Long> pendingAdrp = new HashMap<>();
+        InstructionIterator it = currentProgram.getListing().getInstructions(true);
+        while (it.hasNext()) {
+            Instruction insn = it.next();
+            String mn = insn.getMnemonicString();
+            if (mn == null) continue;
+            mn = mn.toLowerCase();
+            try {
+                if (mn.equals("adrp")) {
+                    Register destReg = firstRegister(insn, 0);
+                    Long page = firstScalarOrAddress(insn, 1);
+                    if (destReg != null && page != null) {
+                        pendingAdrp.put(destReg.getName(), page);
+                    }
+                } else if (mn.equals("add")) {
+                    Register destReg = firstRegister(insn, 0);
+                    Register srcReg = firstRegister(insn, 1);
+                    Long imm = firstScalarOrAddress(insn, 2);
+                    if (srcReg != null && imm != null) {
+                        Long page = pendingAdrp.get(srcReg.getName());
+                        if (page != null) {
+                            long full = page + imm;
+                            result.computeIfAbsent(full, k -> new ArrayList<>()).add(insn.getAddress());
+                        }
+                    }
+                } else if (mn.equals("ldr") || mn.equals("str") || mn.equals("ldrb")
+                        || mn.equals("strb") || mn.equals("ldrh") || mn.equals("strh")) {
+                    // Memory operand "[Xn, #imm]" is usually operand index 1.
+                    Register baseReg = firstRegister(insn, 1);
+                    if (baseReg != null) {
+                        Long page = pendingAdrp.get(baseReg.getName());
+                        if (page != null) {
+                            Long imm = firstScalarOrAddress(insn, 1);
+                            long full = page + (imm == null ? 0L : imm);
+                            result.computeIfAbsent(full, k -> new ArrayList<>()).add(insn.getAddress());
+                        }
+                    }
+                }
+            } catch (Exception ignore) {
+                // Any odd/unsupported operand encoding - skip this instruction.
+            }
+        }
+        return result;
+    }
+
+    private Register firstRegister(Instruction insn, int opIndex) {
+        if (opIndex >= insn.getNumOperands()) return null;
+        Object[] objs = insn.getOpObjects(opIndex);
+        if (objs == null) return null;
+        for (Object o : objs) {
+            if (o instanceof Register) return (Register) o;
+        }
+        return null;
+    }
+
+    private Long firstScalarOrAddress(Instruction insn, int opIndex) {
+        if (opIndex >= insn.getNumOperands()) return null;
+        Object[] objs = insn.getOpObjects(opIndex);
+        if (objs == null) return null;
+        for (Object o : objs) {
+            if (o instanceof Scalar) return ((Scalar) o).getUnsignedValue();
+            if (o instanceof Address) return ((Address) o).getOffset();
+        }
+        return null;
+    }
+
     // Clears the "does not return" flag on whatever Function exists at
-    // `addr`, following the thunk chain (a thunk may itself point at
-    // another thunk) up to a safety limit. Also forces a Function to
-    // exist at `addr` if none does yet, so there is something to clear.
+    // `addr`, following the thunk chain up to a safety limit. Also
+    // forces a Function to exist at `addr` if none does yet, so there
+    // is something to clear. (Needed because a bad no-return flag here
+    // was truncating every forced function's body to a single
+    // instruction, collapsing it into a trivial self-thunk.)
     private void clearNoReturnChain(Address addr) {
         try {
             Function fn = currentProgram.getListing().getFunctionAt(addr);
@@ -250,9 +280,6 @@ public class FindStateRefs extends GhidraScript {
             Address a = from;
             Address foundEntry = null;
             while (a.compareTo(searchStart) >= 0) {
-                // Make sure this address is disassembled so we can inspect
-                // it as an instruction; skip addresses that already are
-                // (common once a neighboring reference has covered them).
                 Instruction insn = currentProgram.getListing().getInstructionAt(a);
                 if (insn == null) {
                     try {
@@ -277,7 +304,7 @@ public class FindStateRefs extends GhidraScript {
                 try {
                     a = a.subtract(4);
                 } catch (Exception overflow) {
-                    break; // hit the start of the address space
+                    break;
                 }
             }
 
@@ -285,9 +312,6 @@ public class FindStateRefs extends GhidraScript {
                 return null;
             }
 
-            // Disassemble forward from the recovered entry point so Ghidra
-            // has enough code in the listing to compute the function body,
-            // then define the function.
             Address fwdEnd = foundEntry.add(maxForwardDisasmBytes);
             Address d = foundEntry;
             while (d != null && d.compareTo(fwdEnd) <= 0) {
@@ -310,18 +334,11 @@ public class FindStateRefs extends GhidraScript {
                 fn = createFunction(foundEntry, null);
             }
 
-            // Safety net: if this STILL came back as a trivial thunk whose
-            // body is only the single "bl marker" instruction (the bug we
-            // saw before clearNoReturnChain() existed - or a recurrence of
-            // it for some other reason), blow it away and rebuild the
-            // function with an EXPLICIT body spanning everything we just
-            // disassembled, bypassing Ghidra's flow-based body computation
-            // (and its thunk auto-detection) entirely.
             if (fn != null && (fn.isThunk() || fn.getBody().getNumAddresses() <= 4)) {
                 try {
                     currentProgram.getListing().removeFunction(foundEntry);
                 } catch (Exception ignore) {
-                    // ignore - may not have existed as a plain function
+                    // ignore
                 }
                 AddressSet body = new AddressSet();
                 InstructionIterator insns = currentProgram.getListing()
@@ -339,17 +356,27 @@ public class FindStateRefs extends GhidraScript {
         }
     }
 
+    // Raw byte search across all initialized memory blocks - no
+    // dependency on the ASCII Strings analyzer or Defined Data at all.
+    // Matches the exact target text followed by a NUL terminator.
     private List<Address> findExactStringAddresses(String target) throws Exception {
         List<Address> results = new ArrayList<>();
-        DataIterator it = currentProgram.getListing().getDefinedData(true);
-        while (it.hasNext()) {
-            Data d = it.next();
-            if (!d.hasStringValue()) continue;
-            Object val = d.getValue();
-            if (val == null) continue;
-            String s = val.toString();
-            if (s.equals(target)) {
-                results.add(d.getAddress());
+        byte[] pattern = (target + "\0").getBytes(StandardCharsets.US_ASCII);
+        Memory mem = currentProgram.getMemory();
+        for (MemoryBlock block : mem.getBlocks()) {
+            if (!block.isInitialized()) continue;
+            Address start = block.getStart();
+            Address end = block.getEnd();
+            Address cursor = start;
+            while (cursor != null && cursor.compareTo(end) <= 0) {
+                Address hit = mem.findBytes(cursor, end, pattern, null, true, monitor);
+                if (hit == null) break;
+                results.add(hit);
+                try {
+                    cursor = hit.add(1);
+                } catch (Exception overflow) {
+                    break;
+                }
             }
         }
         return results;
