@@ -1,19 +1,4 @@
-location with offset: at 14121d60 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14121de0 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14121e60 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14121ee0 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14121f60 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14121fe0 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14122060 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 141220e0 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14122160 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 141221e0 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 141222b0 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14122330 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14122498 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 141224c0 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14122560 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14122570 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
+t: at 14122570 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
 WARN  EXTERNAL Data ELF Relocation with offset: at 141226a8 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
 WARN  EXTERNAL Data ELF Relocation with offset: at 14122740 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
 WARN  EXTERNAL Data ELF Relocation with offset: at 141227c0 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
@@ -13276,6 +13261,16 @@ Resolving External Symbols of [/libminecraftpe.so] - 954 unresolved symbols, no 
 INFO  IMPORTING: Loaded 0 additional files (HeadlessAnalyzer)  
 INFO  REPORT: Execute script: DisableHeavyAnalyzers.java  (HeadlessAnalyzer)  
 INFO  SCRIPT: /home/runner/work/LeviLauncheroid-MOD-red-stone/LeviLauncheroid-MOD-red-stone/ghidra_scripts/DisableHeavyAnalyzers.java (HeadlessAnalyzer)  
+INFO  DisableHeavyAnalyzers.java> Disabled analyzer option: Basic Constant Reference Analyzer (GhidraScript)  
+INFO  DisableHeavyAnalyzers.java> Disabled analyzer option: Basic Constant Reference Analyzer.Create Data from pointer (GhidraScript)  
+INFO  DisableHeavyAnalyzers.java> Disabled analyzer option: Basic Constant Reference Analyzer.Function parameter/return Pointer analysis (GhidraScript)  
+INFO  DisableHeavyAnalyzers.java> Could not disable: Basic Constant Reference Analyzer.Max Threads (Expected option type: BOOLEAN_TYPE, but was type: INT_TYPE) (GhidraScript)  
+INFO  DisableHeavyAnalyzers.java> Could not disable: Basic Constant Reference Analyzer.Min absolute reference (Expected option type: BOOLEAN_TYPE, but was type: LONG_TYPE) (GhidraScript)  
+INFO  DisableHeavyAnalyzers.java> Disabled analyzer option: Basic Constant Reference Analyzer.Require pointer param data type (GhidraScript)  
+INFO  DisableHeavyAnalyzers.java> Could not disable: Basic Constant Reference Analyzer.Speculative reference max (Expected option type: BOOLEAN_TYPE, but was type: LONG_TYPE) (GhidraScript)  
+INFO  DisableHeavyAnalyzers.java> Could not disable: Basic Constant Reference Analyzer.Speculative reference min (Expected option type: BOOLEAN_TYPE, but was type: LONG_TYPE) (GhidraScript)  
+INFO  DisableHeavyAnalyzers.java> Disabled analyzer option: Basic Constant Reference Analyzer.Stored Value Pointer analysis (GhidraScript)  
+INFO  DisableHeavyAnalyzers.java> Disabled analyzer option: Basic Constant Reference Analyzer.Trust values read from writable memory (GhidraScript)  
 INFO  DisableHeavyAnalyzers.java> Disabled analyzer option: Call-Fixup Installer (GhidraScript)  
 INFO  DisableHeavyAnalyzers.java> Disabled analyzer option: Decompiler Switch Analysis (GhidraScript)  
 INFO  DisableHeavyAnalyzers.java> Could not disable: Decompiler Switch Analysis.Analysis Decompiler Timeout (sec) (Expected option type: BOOLEAN_TYPE, but was type: INT_TYPE) (GhidraScript)  
@@ -13296,77 +13291,67 @@ ERROR Invalid PNG data at 02414916 (PngDataType)
 ERROR Invalid GIF data at 02434693 (GifDataType)  
 ERROR Invalid PNG data at 02679800 (PngDataType)  
 ERROR Invalid PNG data at 027e8be0 (PngDataType)  
-ERROR VarnodeContext: out of address spaces at @12c8a2d0 for: d29-12c8a2d0 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @072fced0 for: d26-072fced0 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0dd7e794 for: x12-0dd7e794 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0fd7f5e0 for: x10-0fd7f5e0 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @088fdc04 for: d27-088fdc04 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @12df74d4 for: x8-12df74d4 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @11376664 for: x9-11376664 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @06777040 for: d30-06777040 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0b6ee8c4 for: x8-0b6ee8c4 (VarnodeContext)  
-WARN  More than 100 address segments have been created! (AddressMapDB)  
-ERROR VarnodeContext: out of address spaces at @13b6e040 for: d22-13b6e040 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0d50b7a0 for: d28-0d50b7a0 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0dbec67c for: d29-0dbec67c (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @088eeff8 for: d26-088eeff8 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @137f44c8 for: x13-137f44c8 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @134ec558 for: d24-134ec558 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @11de73c8 for: d28-11de73c8 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0b9687b0 for: x12-0b9687b0 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0b75b82c for: d26-0b75b82c (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @1135d400 for: q0-1135d400 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @110e8438 for: x15-110e8438 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @12de2070 for: x1-12de2070 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0935be68 for: d30-0935be68 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0dcd961c for: d27-0dcd961c (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0ae5adb0 for: d29-0ae5adb0 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @1045e56c for: q0-1045e56c (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @088d8c28 for: x12-088d8c28 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0b0c3b38 for: x1-0b0c3b38 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0d9bf828 for: x11-0d9bf828 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0d13d9bc for: d24-0d13d9bc (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @1114805c for: d20-1114805c (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @139baa98 for: x18-139baa98 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @088b848c for: x1-088b848c (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0dcbf560 for: d26-0dcbf560 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @11cb40f4 for: x1-11cb40f4 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0a7222a4 for: d28-0a7222a4 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0dca94b0 for: x1-0dca94b0 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @06c38eec for: x14-06c38eec (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @1372a438 for: d16-1372a438 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0d726cb0 for: d26-0d726cb0 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0891fe4c for: d24-0891fe4c (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @13523b8c for: x8-13523b8c (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @11117944 for: d23-11117944 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0b2933b8 for: d25-0b2933b8 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @089a3e08 for: d27-089a3e08 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @13c9ec24 for: x8-13c9ec24 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0dd920b8 for: d26-0dd920b8 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0fe0db90 for: d16-0fe0db90 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @06683260 for: x17-06683260 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0988b278 for: d17-0988b278 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @08ad6534 for: d30-08ad6534 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @08bd9280 for: d21-08bd9280 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @08ca32cc for: x11-08ca32cc (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @08dad9d8 for: d31-08dad9d8 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @090242c0 for: d24-090242c0 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @0f77cfd0 for: x16-0f77cfd0 (VarnodeContext)  
-ERROR VarnodeContext: out of address spaces at @10dca154 for: x0-10dca154 (VarnodeContext)  
+INFO  Packed database cache: /var/tmp/runner-ghidra/packed-db-cache (PackedDatabaseCache)  
+INFO  Applied data type archive: generic_clib_64 (ApplyDataArchiveAnalyzer)  
+WARN  Unable to fully apply external demangled Address Table at 14a901e0: std::length_error::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a901e8: std::bad_array_new_length::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a901f0: __cxxabiv1::__si_class_type_info::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a901f8: std::__ndk1::__shared_weak_count::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90200: __cxxabiv1::__vmi_class_type_info::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90208: std::__ndk1::bad_weak_ptr::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90210: __cxxabiv1::__class_type_info::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90218: std::bad_variant_access::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90220: std::bad_variant_access::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90230: __cxxabiv1::__pointer_type_info::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90238: __cxxabiv1::__function_type_info::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90540: std::bad_optional_access::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90548: std::bad_optional_access::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90558: std::out_of_range::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90618: std::__ndk1::regex_error::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90798: std::__ndk1::basic_ios<char,std::__ndk1::char_traits<char>>::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a907a0: std::__ndk1::basic_iostream<char,std::__ndk1::char_traits<char>>::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a907a8: std::__ndk1::basic_istream<char,std::__ndk1::char_traits<char>>::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a907b0: std::__ndk1::basic_ostream<char,std::__ndk1::char_traits<char>>::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a908f0: std::__ndk1::__assoc_sub_state::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a908f8: std::__ndk1::__assoc_sub_state::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90900: std::__ndk1::future_error::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90908: std::__ndk1::future_error::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90a90: std::__ndk1::error_category::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90ad0: std::overflow_error::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90ad8: std::overflow_error::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90b98: std::__ndk1::basic_streambuf<char,std::__ndk1::char_traits<char>>::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a90ba0: std::__ndk1::basic_ostream<char,std::__ndk1::char_traits<char>>::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a912c0: __cxxabiv1::__pointer_to_member_type_info::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a91998: std::invalid_argument::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a91d08: std::range_error::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a91d78: std::__ndk1::system_error::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a91d80: std::underflow_error::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a91d88: int::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a91d90: std::__ndk1::system_error::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a91ea8: Microsoft::Applications::Events::DebugEventSource::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a91ed8: std::domain_error::typeinfo (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a91ee8: std::domain_error::vtable (DemangledAddressTable)  
+WARN  Unable to fully apply external demangled Address Table at 14a91f30: std::__ndk1::locale::facet::typeinfo (DemangledAddressTable)  
 INFO  -----------------------------------------------------
-    AARCH64 ELF PLT Thunks                     6.468 secs
-    Basic Constant Reference Analyzer        982.090 secs
-    Create Function                           51.058 secs
-    DWARF                                      0.009 secs
-    Disassemble                              260.722 secs
-    Disassemble Entry Points                 162.244 secs
-    Embedded Media                             1.538 secs
-    External Entry References                  0.986 secs
-    Function Start Search                     11.359 secs
-    Non-Returning Functions - Known            0.317 secs
-    Subroutine References                     23.203 secs
+    AARCH64 ELF PLT Thunks                    10.472 secs
+    Apply Data Archives                        4.377 secs
+    Call Convention ID                       969.157 secs
+    Create Function                           47.688 secs
+    DWARF                                      0.013 secs
+    Data Reference                            21.303 secs
+    Demangler GNU                             45.881 secs
+    Disassemble                              292.150 secs
+    Disassemble Entry Points                 182.051 secs
+    Embedded Media                             2.064 secs
+    External Entry References                  1.219 secs
+    Function ID                                0.022 secs
+    Function Start Search                     13.343 secs
+    Function Start Search delayed - One Time  28.475 secs
+    Non-Returning Functions - Known            0.487 secs
+    Reference                                 21.810 secs
+    Subroutine References                     23.107 secs
 -----------------------------------------------------
-     Total Time   1499 secs
+     Total Time   1663 secs
 -----------------------------------------------------
  (AutoAnalysisManager)  
 ERROR REPORT: Analysis timed out at 1500 seconds. Processing not completed for file: file:///home/runner/work/LeviLauncheroid-MOD-red-stone/LeviLauncheroid-MOD-red-stone/libminecraftpe.so (HeadlessAnalyzer)  
