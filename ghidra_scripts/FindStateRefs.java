@@ -65,6 +65,23 @@ public class FindStateRefs extends GhidraScript {
         Address marker = toAddr(FUNC_PROLOGUE_MARKER_OFFSET);
         clearNoReturnChain(marker);
 
+        // The ADRP+ADD/LDR scan below only sees instructions Ghidra has
+        // ALREADY disassembled. With most data-flow analyzers disabled
+        // (they were too slow on this binary), large parts of the
+        // executable sections were never reached by flow-following
+        // disassembly or by the "Function Start Search" heuristic - so
+        // the last run found literally zero references for all 4 targets,
+        // not because they don't exist, but because the code containing
+        // them was never turned into Instruction objects in the first
+        // place. Force disassembly of every address in every executable,
+        // initialized memory block ourselves first, so there's no
+        // coverage gap left for the scan to miss. Base disassembly (no
+        // data-flow/constant-propagation) is cheap compared to the
+        // analyzers we disabled - this is NOT what was timing out before.
+        emit("Force-disassembling all executable memory (closing analyzer coverage gaps)...");
+        int newlyDisassembled = disassembleAllExecutableCode();
+        emit("Force-disassembly pass added " + newlyDisassembled + " new instruction(s).");
+
         emit("Building adrp+add/ldr/str reference index over the whole program (one pass)...");
         Map<Long, List<Address>> refIndex = buildAdrpReferenceIndex();
         emit("Index built: " + refIndex.size() + " distinct target addresses materialized in code.");
@@ -154,6 +171,50 @@ public class FindStateRefs extends GhidraScript {
         decomp.dispose();
         out.close();
         println("Done. Wrote state_refs_output.txt (also mirrored to stdout above)");
+    }
+
+    // Steps 4 bytes at a time (AArch64 fixed instruction width) through
+    // every initialized, executable memory block and calls disassemble()
+    // wherever Ghidra doesn't already have an Instruction, so the ADRP
+    // scan below has complete coverage regardless of which analyzers
+    // ran or finished. Returns the number of newly-created instructions.
+    private int disassembleAllExecutableCode() {
+        int count = 0;
+        long deadline = System.currentTimeMillis() + (2L * 60 * 60 * 1000); // 2h cap
+        Memory mem = currentProgram.getMemory();
+        outer:
+        for (MemoryBlock block : mem.getBlocks()) {
+            if (!block.isInitialized() || !block.isExecute()) continue;
+            Address a = block.getStart();
+            Address end = block.getEnd();
+            long checkCounter = 0;
+            while (a != null && a.compareTo(end) <= 0) {
+                if (currentProgram.getListing().getInstructionAt(a) == null) {
+                    try {
+                        if (disassemble(a)) {
+                            count++;
+                        }
+                    } catch (Exception ignore) {
+                        // data mixed into an executable block, or an
+                        // already-covered address overlapping from a
+                        // previous instruction - skip and keep stepping
+                    }
+                }
+                try {
+                    a = a.add(4);
+                } catch (Exception overflow) {
+                    break;
+                }
+                if ((++checkCounter & 0xFFFF) == 0) {
+                    if (monitor.isCancelled() || System.currentTimeMillis() > deadline) {
+                        println("disassembleAllExecutableCode: stopping early (time cap or cancel) after "
+                                + count + " new instruction(s)");
+                        break outer;
+                    }
+                }
+            }
+        }
+        return count;
     }
 
     // One linear pass over every already-disassembled instruction in the
