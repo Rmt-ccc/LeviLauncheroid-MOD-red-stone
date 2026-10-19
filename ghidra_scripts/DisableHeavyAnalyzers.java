@@ -36,6 +36,14 @@ public class DisableHeavyAnalyzers extends GhidraScript {
         "non-returning functions - discovered",
         "decompiler switch analysis",
         "shared return calls",
+        // THE actual culprit, finally identified via the per-analyzer
+        // timing report: Basic Constant Reference Analyzer took 982 of
+        // the 1500-second budget, and is also the source of the
+        // "VarnodeContext: out of address spaces at @X for: dN-X"
+        // error spam seen in every prior run (it chokes on this
+        // binary's NEON/vector register usage). Disabling it should
+        // finally leave the budget free for ASCII Strings to run.
+        "constant reference",
     };
 
     @Override
