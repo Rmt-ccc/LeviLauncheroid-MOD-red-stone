@@ -38,6 +38,7 @@ jobs:
             -scriptPath "$GITHUB_WORKSPACE/ghidra_scripts" \
             -preScript DisableHeavyAnalyzers.java \
             -postScript FindStateRefs.java \
+            -postScript FindCallers.java \
             -deleteProject \
             -max-cpu 2 \
             -analysisTimeoutPerFile 1500 \
@@ -49,6 +50,7 @@ jobs:
           name: ghidra-results
           path: |
             state_refs_output.txt
+            caller_refs_output.txt
             analyze.log
           if-no-files-found: warn
 
@@ -56,11 +58,12 @@ jobs:
         run: |
           mkdir -p Ghidra-Analysis-Data
           cp state_refs_output.txt Ghidra-Analysis-Data/state_refs_output.txt 2>/dev/null || true
+          cp caller_refs_output.txt Ghidra-Analysis-Data/caller_refs_output.txt 2>/dev/null || true
           # analyze.log can be huge; keep only the tail so the commit stays small.
           tail -c 2000000 analyze.log > Ghidra-Analysis-Data/analyze_tail.log 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Ghidra-Analysis-Data/state_refs_output.txt Ghidra-Analysis-Data/analyze_tail.log
+          git add Ghidra-Analysis-Data/state_refs_output.txt Ghidra-Analysis-Data/caller_refs_output.txt Ghidra-Analysis-Data/analyze_tail.log
           if ! git diff --cached --quiet; then
             git commit -m "Ghidra Analyze: auto-commit results (run ${{ github.run_id }})"
             git push origin HEAD:main
