@@ -57,16 +57,52 @@ jobs:
       - name: Commit results directly to the repo
         run: |
           mkdir -p Ghidra-Analysis-Data
-          cp state_refs_output.txt Ghidra-Analysis-Data/state_refs_output.txt 2>/dev/null || true
-          cp caller_refs_output.txt Ghidra-Analysis-Data/caller_refs_output.txt 2>/dev/null || true
+
+          # Appends each run's output as Ghidra-Analysis-Data/<basename>-N.txt
+          # (N = 1, 2, 3, ... in plain Arabic numerals, one series per
+          # basename). Skips creating a new numbered file when this run's
+          # output is byte-identical to the latest existing one, so an
+          # unchanged script doesn't pile up duplicate files run after run.
+          archive_numbered() {
+            local src="$1"
+            local base="$2"
+            [ -f "$src" ] || return 0
+
+            local latest_n=0
+            local latest_file=""
+            for f in "Ghidra-Analysis-Data/${base}-"*.txt; do
+              [ -f "$f" ] || continue
+              local n
+              n=$(echo "$f" | sed -E "s/.*${base}-([0-9]+)\.txt/\1/")
+              case "$n" in (''|*[!0-9]*) continue ;; esac
+              if [ "$n" -gt "$latest_n" ]; then
+                latest_n="$n"
+                latest_file="$f"
+              fi
+            done
+
+            if [ -n "$latest_file" ] && cmp -s "$src" "$latest_file"; then
+              echo "Skipping $base: identical to $latest_file"
+              return 0
+            fi
+
+            local next=$((latest_n + 1))
+            cp "$src" "Ghidra-Analysis-Data/${base}-${next}.txt"
+            git add "Ghidra-Analysis-Data/${base}-${next}.txt"
+          }
+
+          archive_numbered state_refs_output.txt state_refs_output
+          archive_numbered caller_refs_output.txt caller_refs_output
+
           # analyze.log can be huge; keep only the tail so the commit stays small.
           tail -c 2000000 analyze.log > Ghidra-Analysis-Data/analyze_tail.log 2>/dev/null || true
+          git add Ghidra-Analysis-Data/analyze_tail.log
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Ghidra-Analysis-Data/state_refs_output.txt Ghidra-Analysis-Data/caller_refs_output.txt Ghidra-Analysis-Data/analyze_tail.log
           if ! git diff --cached --quiet; then
             git commit -m "Ghidra Analyze: auto-commit results (run ${{ github.run_id }})"
             git push origin HEAD:main
           else
-            echo "No changes to commit (no output files produced)."
+            echo "No changes to commit (no new output produced)."
           fi
