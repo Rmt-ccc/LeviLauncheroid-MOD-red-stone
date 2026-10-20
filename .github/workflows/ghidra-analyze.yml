@@ -39,6 +39,7 @@ jobs:
             -preScript DisableHeavyAnalyzers.java \
             -postScript FindStateRefs.java \
             -postScript FindCallers.java \
+            -postScript FindAccessorStrings.java \
             -deleteProject \
             -max-cpu 2 \
             -analysisTimeoutPerFile 1500 \
@@ -51,6 +52,7 @@ jobs:
           path: |
             state_refs_output.txt
             caller_refs_output.txt
+            accessor_refs_output.txt
             analyze.log
           if-no-files-found: warn
 
@@ -93,6 +95,7 @@ jobs:
 
           archive_numbered state_refs_output.txt state_refs_output
           archive_numbered caller_refs_output.txt caller_refs_output
+          archive_numbered accessor_refs_output.txt accessor_refs_output
 
           # analyze.log can be huge; keep only the tail so the commit stays small.
           tail -c 2000000 analyze.log > Ghidra-Analysis-Data/analyze_tail.log 2>/dev/null || true
