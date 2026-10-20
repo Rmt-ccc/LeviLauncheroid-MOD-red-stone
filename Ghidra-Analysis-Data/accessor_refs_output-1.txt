@@ -1,0 +1,23 @@
+Force-disassembling all executable memory (closing analyzer coverage gaps)...
+Force-disassembly pass added 7714 new instruction(s).
+Building adrp+add/ldr/str reference index over the whole program (one pass)...
+Index built: 604094 distinct target addresses materialized in code.
+
+========== STRING: LegacyBlock ==========
+  (not found as raw bytes in any initialized memory block)
+
+========== STRING: getLegacyBlock ==========
+  (not found as raw bytes in any initialized memory block)
+
+========== STRING: getSerializationId ==========
+  (not found as raw bytes in any initialized memory block)
+
+========== STRING: fromLegacyData ==========
+  (not found as raw bytes in any initialized memory block)
+
+========== STRING: toLegacyData ==========
+  (not found as raw bytes in any initialized memory block)
+
+========== STRING: BlockLegacy ==========
+  (not found as raw bytes in any initialized memory block)
+

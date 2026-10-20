@@ -1,19 +1,4 @@
-a ELF Relocation with offset: at 1427e9c8 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 1427ea48 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 1427eac8 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 1427eed8 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 1427ef98 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14280220 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14280248 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 142805d8 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 142807f0 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14280870 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 142811f0 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14281558 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 142817a0 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 142817c8 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14281da8 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
-WARN  EXTERNAL Data ELF Relocation with offset: at 14281de8 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
+
 WARN  EXTERNAL Data ELF Relocation with offset: at 14281df8 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
 WARN  EXTERNAL Data ELF Relocation with offset: at 14281f38 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
 WARN  EXTERNAL Data ELF Relocation with offset: at 14282040 (External Location = _ZTVN10__cxxabiv117__class_type_infoE+0x10) (ElfRelocationHandler)  
@@ -7889,18 +7874,18 @@ INFO  ANALYZING all memory and code: file:///home/runner/work/LeviLauncheroid-MO
 INFO  DWARF external debug information found: ExternalDebugInfo [filename=null, crc=0, hash=d90c360ca7d63f65b13f342a985742563fd5c37a, objectType=DEBUGINFO, extra=null] (ExternalDebugFileSectionProvider)  
 INFO  Unable to find DWARF information, skipping DWARF analysis (DWARFAnalyzer)  
 INFO  -----------------------------------------------------
-    AARCH64 ELF PLT Thunks                    10.314 secs
-    ASCII Strings                             23.809 secs
-    DWARF                                      0.013 secs
-    Disassemble                              419.404 secs
-    Disassemble Entry Points                 190.766 secs
-    Function Start Search                     13.607 secs
-    Function Start Search After Code          20.943 secs
-    Function Start Search After Data          17.253 secs
-    Function Start Search delayed - One Time  58.654 secs
-    Non-Returning Functions - Known            0.447 secs
+    AARCH64 ELF PLT Thunks                     5.410 secs
+    ASCII Strings                             13.221 secs
+    DWARF                                      0.011 secs
+    Disassemble                              275.014 secs
+    Disassemble Entry Points                 126.558 secs
+    Function Start Search                      8.991 secs
+    Function Start Search After Code          12.844 secs
+    Function Start Search After Data          10.308 secs
+    Function Start Search delayed - One Time  45.567 secs
+    Non-Returning Functions - Known            0.400 secs
 -----------------------------------------------------
-     Total Time   755 secs
+     Total Time   498 secs
 -----------------------------------------------------
  (AutoAnalysisManager)  
 INFO  REPORT: Analysis succeeded for file: file:///home/runner/work/LeviLauncheroid-MOD-red-stone/LeviLauncheroid-MOD-red-stone/libminecraftpe.so (HeadlessAnalyzer)  
@@ -27094,13 +27079,39 @@ INFO  FindCallers.java> ========== CALLERS OF: 11633944 ========== (GhidraScript
 INFO  FindCallers.java>   (no 'bl' instructions found targeting this address) (GhidraScript)  
 INFO  FindCallers.java>  (GhidraScript)  
 INFO  FindCallers.java> Done. Wrote caller_refs_output.txt (also mirrored to stdout above) (GhidraScript)  
+INFO  REPORT: Execute script: FindAccessorStrings.java  (HeadlessAnalyzer)  
+INFO  SCRIPT: /home/runner/work/LeviLauncheroid-MOD-red-stone/LeviLauncheroid-MOD-red-stone/ghidra_scripts/FindAccessorStrings.java (HeadlessAnalyzer)  
+INFO  FindAccessorStrings.java> Force-disassembling all executable memory (closing analyzer coverage gaps)... (GhidraScript)  
+INFO  FindAccessorStrings.java> Force-disassembly pass added 7714 new instruction(s). (GhidraScript)  
+INFO  FindAccessorStrings.java> Building adrp+add/ldr/str reference index over the whole program (one pass)... (GhidraScript)  
+INFO  FindAccessorStrings.java> Index built: 604094 distinct target addresses materialized in code. (GhidraScript)  
+INFO  FindAccessorStrings.java>  (GhidraScript)  
+INFO  FindAccessorStrings.java> ========== STRING: LegacyBlock ========== (GhidraScript)  
+INFO  FindAccessorStrings.java>   (not found as raw bytes in any initialized memory block) (GhidraScript)  
+INFO  FindAccessorStrings.java>  (GhidraScript)  
+INFO  FindAccessorStrings.java> ========== STRING: getLegacyBlock ========== (GhidraScript)  
+INFO  FindAccessorStrings.java>   (not found as raw bytes in any initialized memory block) (GhidraScript)  
+INFO  FindAccessorStrings.java>  (GhidraScript)  
+INFO  FindAccessorStrings.java> ========== STRING: getSerializationId ========== (GhidraScript)  
+INFO  FindAccessorStrings.java>   (not found as raw bytes in any initialized memory block) (GhidraScript)  
+INFO  FindAccessorStrings.java>  (GhidraScript)  
+INFO  FindAccessorStrings.java> ========== STRING: fromLegacyData ========== (GhidraScript)  
+INFO  FindAccessorStrings.java>   (not found as raw bytes in any initialized memory block) (GhidraScript)  
+INFO  FindAccessorStrings.java>  (GhidraScript)  
+INFO  FindAccessorStrings.java> ========== STRING: toLegacyData ========== (GhidraScript)  
+INFO  FindAccessorStrings.java>   (not found as raw bytes in any initialized memory block) (GhidraScript)  
+INFO  FindAccessorStrings.java>  (GhidraScript)  
+INFO  FindAccessorStrings.java> ========== STRING: BlockLegacy ========== (GhidraScript)  
+INFO  FindAccessorStrings.java>   (not found as raw bytes in any initialized memory block) (GhidraScript)  
+INFO  FindAccessorStrings.java>  (GhidraScript)  
+INFO  FindAccessorStrings.java> Done. Wrote accessor_refs_output.txt (also mirrored to stdout above) (GhidraScript)  
 INFO  ANALYZING changes made by post scripts: file:///home/runner/work/LeviLauncheroid-MOD-red-stone/LeviLauncheroid-MOD-red-stone/libminecraftpe.so (HeadlessAnalyzer)  
 INFO  -----------------------------------------------------
     Function Start Search                      0.000 secs
-    Function Start Search After Code           7.503 secs
-    Function Start Search delayed - One Time  10.124 secs
+    Function Start Search After Code           6.085 secs
+    Function Start Search delayed - One Time   7.628 secs
 -----------------------------------------------------
-     Total Time   17 secs
+     Total Time   13 secs
 -----------------------------------------------------
  (AutoAnalysisManager)  
 INFO  REPORT: Post-analysis succeeded for file: file:///home/runner/work/LeviLauncheroid-MOD-red-stone/LeviLauncheroid-MOD-red-stone/libminecraftpe.so (HeadlessAnalyzer)  
