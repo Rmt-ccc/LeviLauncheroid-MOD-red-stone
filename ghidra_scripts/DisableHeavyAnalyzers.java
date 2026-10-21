@@ -17,6 +17,18 @@
 // FindStateRefs.java's own manual ADRP+ADD/LDR scan find string
 // references itself, without relying on Ghidra's reference/constant-
 // propagation analyzers at all.
+//
+// "rtti"/"class" and "demangler" were added after FindClassVtables.java's
+// own hand-rolled "scan raw memory for 8-byte-aligned pointer matches"
+// approach to locating Block's vtable produced garbage (130+ bogus
+// "vtable" hits for one type_info, including data misread as code) -
+// almost certainly ELF relocation-table entries being misread as real
+// pointers. Ghidra's own RTTI analyzer builds proper typed vtable/
+// type_info structures (and the correct class namespaces/symbols) from
+// the same Itanium ABI layout instead of raw pointer-value coincidence,
+// so it should not be fooled the same way. Demangler is enabled
+// alongside it purely so any symbols RTTI recovers come out readable
+// instead of as further FUN_xxxxxxxx noise.
 public class DisableHeavyAnalyzers extends ghidra.app.script.GhidraScript {
 
     private static final String[] KEEP_ENABLED_IF_NAME_CONTAINS = {
@@ -27,6 +39,9 @@ public class DisableHeavyAnalyzers extends ghidra.app.script.GhidraScript {
         "non-returning functions - known",
         "aarch64 elf plt thunks",
         "dwarf",                       // near-instant here anyway (DWARF not found)
+        "rtti",                        // recover real vtable/type_info structures
+        "class",                       // some Ghidra builds name it "RTTI/Class..." or similar
+        "demangler",                   // make any RTTI-recovered symbols readable
     };
 
     @Override
