@@ -60,26 +60,28 @@ jobs:
         run: |
           mkdir -p Ghidra-Analysis-Data
 
-          # Appends each run's output as Ghidra-Analysis-Data/<basename>-N.txt
-          # (N = 1, 2, 3, ... in plain Arabic numerals, one series per
-          # basename). Skips creating a new numbered file when this run's
-          # output is byte-identical to the latest existing one, so an
-          # unchanged script doesn't pile up duplicate files run after run.
+          # Appends each run's output as Ghidra-Analysis-Data/<basename>-N.txt,
+          # N in roman numerals (Ⅰ, Ⅱ, Ⅲ, ...), one series per basename -
+          # matching this repo's existing file-naming convention. Skips
+          # creating a new numbered file when this run's output is
+          # byte-identical to the latest existing one, so an unchanged
+          # script doesn't pile up duplicate files run after run.
+          # analyze.log (raw Ghidra stdout) is intentionally not archived -
+          # the three scripts' own structured output files are what matter.
           archive_numbered() {
             local src="$1"
             local base="$2"
             [ -f "$src" ] || return 0
 
-            local latest_n=0
+            local -a ROMAN=(Ⅰ Ⅱ Ⅲ Ⅳ Ⅴ Ⅵ Ⅶ Ⅷ Ⅸ Ⅹ Ⅺ Ⅻ)
+            local count=0
             local latest_file=""
-            for f in "Ghidra-Analysis-Data/${base}-"*.txt; do
-              [ -f "$f" ] || continue
-              local n
-              n=$(echo "$f" | sed -E "s/.*${base}-([0-9]+)\.txt/\1/")
-              case "$n" in (''|*[!0-9]*) continue ;; esac
-              if [ "$n" -gt "$latest_n" ]; then
-                latest_n="$n"
-                latest_file="$f"
+            local i
+            for i in "${!ROMAN[@]}"; do
+              local candidate="Ghidra-Analysis-Data/${base}-${ROMAN[$i]}.txt"
+              if [ -f "$candidate" ]; then
+                count=$((i + 1))
+                latest_file="$candidate"
               fi
             done
 
@@ -88,7 +90,14 @@ jobs:
               return 0
             fi
 
-            local next=$((latest_n + 1))
+            if [ "$count" -ge "${#ROMAN[@]}" ]; then
+              echo "WARNING: ran out of roman numerals for $base (reached ${ROMAN[-1]}); using plain index $((count + 1)) instead"
+              cp "$src" "Ghidra-Analysis-Data/${base}-$((count + 1)).txt"
+              git add "Ghidra-Analysis-Data/${base}-$((count + 1)).txt"
+              return 0
+            fi
+
+            local next="${ROMAN[$count]}"
             cp "$src" "Ghidra-Analysis-Data/${base}-${next}.txt"
             git add "Ghidra-Analysis-Data/${base}-${next}.txt"
           }
@@ -96,10 +105,6 @@ jobs:
           archive_numbered state_refs_output.txt state_refs_output
           archive_numbered caller_refs_output.txt caller_refs_output
           archive_numbered accessor_refs_output.txt accessor_refs_output
-
-          # analyze.log can be huge; keep only the tail so the commit stays small.
-          tail -c 2000000 analyze.log > Ghidra-Analysis-Data/analyze_tail.log 2>/dev/null || true
-          git add Ghidra-Analysis-Data/analyze_tail.log
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
