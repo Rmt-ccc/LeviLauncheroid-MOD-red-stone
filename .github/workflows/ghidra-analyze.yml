@@ -41,6 +41,7 @@ jobs:
             -postScript FindCallers.java \
             -postScript FindAccessorStrings.java \
             -postScript FindClassVtablesViaRTTI.java \
+            -postScript FindExactBlockClasses.java \
             -deleteProject \
             -max-cpu 2 \
             -analysisTimeoutPerFile 1500 \
@@ -55,6 +56,7 @@ jobs:
             caller_refs_output.txt
             accessor_refs_output.txt
             rtti_vtable_refs_output.txt
+            exact_block_classes_output.txt
             analyze.log
           if-no-files-found: warn
 
@@ -108,6 +110,7 @@ jobs:
           archive_numbered caller_refs_output.txt caller_refs_output
           archive_numbered accessor_refs_output.txt accessor_refs_output
           archive_numbered rtti_vtable_refs_output.txt rtti_vtable_refs_output
+          archive_numbered exact_block_classes_output.txt exact_block_classes_output
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
