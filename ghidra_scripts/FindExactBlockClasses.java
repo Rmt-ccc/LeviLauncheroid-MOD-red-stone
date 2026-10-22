@@ -15,14 +15,21 @@
 // an unqualified global "5Block" would.
 //
 // This script narrows the search properly: instead of a raw substring
-// match against every symbol, it asks Ghidra's symbol table for actual
-// recognized C++ CLASS NAMESPACES (GhidraClass objects - only real
-// classes the RTTI/demangler analysis identified, not arbitrary
-// symbols) whose own, exact name is "Block" or "BlockType" - then lists
-// every one found together with its FULL qualified path (so leveldb::Block
-// etc. are immediately distinguishable from Minecraft's own, presumably
+// match against every symbol, it looks specifically for SymbolType.CLASS
+// symbols (real recognized C++ classes, not arbitrary symbols) whose
+// own, exact name is "Block" or "BlockType" - then lists every one
+// found together with its FULL qualified path (so leveldb::Block etc.
+// are immediately distinguishable from Minecraft's own, presumably
 // unqualified, global ::Block), and dumps each such class's direct
 // member symbols (vftable included, if the analyzer created one).
+//
+// NOTE: an earlier version of this script imported
+// ghidra.program.model.symbol.GhidraClass, which does not exist in this
+// Ghidra build ("cannot find symbol") and - because ghidra_scripts/
+// compiles as a single OSGi bundle - silently took every other script
+// in this run down with it too (zero output from the whole run, not
+// just this one). Rewritten to use only Namespace/SymbolType/Symbol,
+// which are stable, long-standing API.
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -36,10 +43,11 @@ import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Function;
-import ghidra.program.model.symbol.GhidraClass;
+import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolIterator;
 import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.task.ConsoleTaskMonitor;
 
 public class FindExactBlockClasses extends GhidraScript {
@@ -68,32 +76,39 @@ public class FindExactBlockClasses extends GhidraScript {
 
         SymbolTable symTable = currentProgram.getSymbolTable();
 
-        emit("Listing every recognized C++ class namespace whose own name is exactly: "
+        emit("Listing every recognized C++ class (SymbolType.CLASS) whose own name is exactly: "
                 + String.join(" or ", EXACT_CLASS_NAMES));
         emit("(Unlike the previous script, this does NOT substring-match - a class named");
         emit(" e.g. 'BlockEntity' or a namespace merely containing 'Block' will NOT show up here.)");
         emit("");
 
-        List<GhidraClass> matches = new ArrayList<>();
-        Iterator<GhidraClass> classIt = symTable.getClassNamespaces();
-        while (classIt.hasNext()) {
-            GhidraClass cls = classIt.next();
+        List<Namespace> matches = new ArrayList<>();
+        Iterator<Symbol> all = symTable.getAllSymbols(true);
+        while (all.hasNext()) {
+            Symbol sym = all.next();
+            if (sym.getSymbolType() != SymbolType.CLASS) continue;
+            boolean hit = false;
             for (String target : EXACT_CLASS_NAMES) {
-                if (cls.getName().equals(target)) {
-                    matches.add(cls);
+                if (sym.getName().equals(target)) {
+                    hit = true;
                     break;
                 }
             }
+            if (!hit) continue;
+            Object obj = sym.getObject();
+            if (obj instanceof Namespace) {
+                matches.add((Namespace) obj);
+            }
         }
 
-        emit("Found " + matches.size() + " matching class namespace(s).");
+        emit("Found " + matches.size() + " matching class(es).");
         emit("");
 
-        for (GhidraClass cls : matches) {
-            String fullPath = cls.getSymbol().getName(true); // full qualified "A::B::Block"
-            emit("========== CLASS: " + fullPath + "  (own name: " + cls.getName() + ") ==========");
+        for (Namespace ns : matches) {
+            String fullPath = ns.getSymbol().getName(true); // full qualified "A::B::Block"
+            emit("========== CLASS: " + fullPath + "  (own name: " + ns.getName() + ") ==========");
 
-            SymbolIterator members = symTable.getSymbols(cls);
+            SymbolIterator members = symTable.getSymbols(ns);
             int memberCount = 0;
             List<Symbol> memberList = new ArrayList<>();
             while (members.hasNext()) {
