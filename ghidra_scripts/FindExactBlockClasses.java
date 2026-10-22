@@ -1,41 +1,29 @@
 // Ghidra headless post-script.
 //
-// Follow-up to FindClassVtablesViaRTTI.java. That script substring-
-// matched "Block" against EVERY symbol name and got 1327 hits, almost
-// all noise: third-party libraries bundled into this binary (leveldb,
-// v8, abseil, cohtml, ...) each have their own, completely unrelated
-// class also literally named "Block" (e.g. leveldb::Block is a real
-// on-disk storage data structure, nothing to do with Minecraft blocks).
-// Worse, this likely explains why FindClassVtables.java's very first
-// attempt (searching raw bytes for the RTTI name string "5Block")
-// probably found one of THOSE classes' RTTI, not Minecraft's own Block
-// class - Itanium name mangling concatenates length-prefixed name
-// components with no separator, so "7leveldb" + "5Block" still
-// contains the literal byte sequence "5Block" as a sub-string, same as
-// an unqualified global "5Block" would.
+// Follow-up to FindClassVtablesViaRTTI.java (1327 noisy substring hits
+// on "Block") and this script's own first version (filtered on
+// SymbolType.CLASS, which found 0 matches - apparently this Ghidra
+// build/run doesn't actually promote demangled namespaces to
+// SymbolType.CLASS, even for namespaces we already confirmed exist,
+// like leveldb::Block, from FindClassVtablesViaRTTI.java's output).
 //
-// This script narrows the search properly: instead of a raw substring
-// match against every symbol, it looks specifically for SymbolType.CLASS
-// symbols (real recognized C++ classes, not arbitrary symbols) whose
-// own, exact name is "Block" or "BlockType" - then lists every one
-// found together with its FULL qualified path (so leveldb::Block etc.
-// are immediately distinguishable from Minecraft's own, presumably
-// unqualified, global ::Block), and dumps each such class's direct
-// member symbols (vftable included, if the analyzer created one).
-//
-// NOTE: an earlier version of this script imported
-// ghidra.program.model.symbol.GhidraClass, which does not exist in this
-// Ghidra build ("cannot find symbol") and - because ghidra_scripts/
-// compiles as a single OSGi bundle - silently took every other script
-// in this run down with it too (zero output from the whole run, not
-// just this one). Rewritten to use only Namespace/SymbolType/Symbol,
-// which are stable, long-standing API.
+// This version drops the SymbolType.CLASS requirement entirely and
+// instead collects, from every symbol's immediate parent namespace, the
+// distinct namespaces whose own (last path component) name is EXACTLY
+// "Block" or "BlockType" - no substring matching, and no dependency on
+// Ghidra having specifically flagged it as a "class". This still fixes
+// FindClassVtablesViaRTTI.java's actual bug (it substring-matched a
+// symbol's OWN name against "Block", so e.g. "NumBlocksInBatch" - a
+// symbol with nothing to do with any Block namespace at all - matched;
+// here we instead check the ENCLOSING namespace's exact leaf name).
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.decompiler.DecompileResults;
@@ -47,14 +35,10 @@ import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolIterator;
 import ghidra.program.model.symbol.SymbolTable;
-import ghidra.program.model.symbol.SymbolType;
-import ghidra.util.task.ConsoleTaskMonitor;
 
 public class FindExactBlockClasses extends GhidraScript {
 
-    // Exact class-name match only (not substring) - this is the whole
-    // point of this script versus FindClassVtablesViaRTTI.java.
-    private static final String[] EXACT_CLASS_NAMES = {
+    private static final String[] EXACT_NAMES = {
         "Block",
         "BlockType",
     };
@@ -76,55 +60,45 @@ public class FindExactBlockClasses extends GhidraScript {
 
         SymbolTable symTable = currentProgram.getSymbolTable();
 
-        emit("Listing every recognized C++ class (SymbolType.CLASS) whose own name is exactly: "
-                + String.join(" or ", EXACT_CLASS_NAMES));
-        emit("(Unlike the previous script, this does NOT substring-match - a class named");
-        emit(" e.g. 'BlockEntity' or a namespace merely containing 'Block' will NOT show up here.)");
+        emit("Listing every distinct namespace whose own (leaf) name is exactly: "
+                + String.join(" or ", EXACT_NAMES));
+        emit("(Found by checking every symbol's immediate parent namespace - no substring");
+        emit(" matching, and no dependency on Ghidra having tagged it as a 'class' symbol.)");
         emit("");
 
-        List<Namespace> matches = new ArrayList<>();
+        Set<Namespace> matches = new LinkedHashSet<>();
         Iterator<Symbol> all = symTable.getAllSymbols(true);
         while (all.hasNext()) {
             Symbol sym = all.next();
-            if (sym.getSymbolType() != SymbolType.CLASS) continue;
-            boolean hit = false;
-            for (String target : EXACT_CLASS_NAMES) {
-                if (sym.getName().equals(target)) {
-                    hit = true;
+            Namespace ns = sym.getParentNamespace();
+            if (ns == null) continue;
+            String name = ns.getName();
+            for (String target : EXACT_NAMES) {
+                if (name.equals(target)) {
+                    matches.add(ns);
                     break;
                 }
             }
-            if (!hit) continue;
-            Object obj = sym.getObject();
-            if (obj instanceof Namespace) {
-                matches.add((Namespace) obj);
-            }
         }
 
-        emit("Found " + matches.size() + " matching class(es).");
+        emit("Found " + matches.size() + " matching namespace(s).");
         emit("");
 
         for (Namespace ns : matches) {
             String fullPath = ns.getSymbol().getName(true); // full qualified "A::B::Block"
-            emit("========== CLASS: " + fullPath + "  (own name: " + ns.getName() + ") ==========");
+            emit("========== NAMESPACE: " + fullPath + "  (own name: " + ns.getName() + ") ==========");
 
             SymbolIterator members = symTable.getSymbols(ns);
-            int memberCount = 0;
             List<Symbol> memberList = new ArrayList<>();
             while (members.hasNext()) {
                 memberList.add(members.next());
-                memberCount++;
             }
-            emit("  " + memberCount + " direct member symbol(s):");
+            emit("  " + memberList.size() + " direct member symbol(s):");
             for (Symbol m : memberList) {
                 emit("    " + m.getSymbolType() + "  " + m.getName() + " @ " + m.getAddress());
             }
             emit("");
 
-            // For each member that looks like it could be the vtable
-            // (name mentions vtable/vftable, OR is simply an array of
-            // pointers regardless of name - the RTTI analyzer doesn't
-            // always label it obviously), dump its slots.
             for (Symbol m : memberList) {
                 Address addr = m.getAddress();
                 Data data = currentProgram.getListing().getDataAt(addr);
@@ -163,7 +137,7 @@ public class FindExactBlockClasses extends GhidraScript {
                     }
                     emit("    slot " + i + ": " + fn.getName() + " @ " + fn.getEntryPoint()
                             + "  params=" + fn.getParameterCount());
-                    DecompileResults res = decomp.decompileFunction(fn, 30, new ConsoleTaskMonitor());
+                    DecompileResults res = decomp.decompileFunction(fn, 30, new ghidra.util.task.ConsoleTaskMonitor());
                     if (res != null && res.decompileCompleted()) {
                         String[] lines = res.getDecompiledFunction().getC().split("\n");
                         int cap = Math.min(lines.length, 20);
