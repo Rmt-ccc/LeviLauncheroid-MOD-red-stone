@@ -1,8 +1,3 @@
-FindExactBlockClasses.java:39: error: cannot find symbol
-FindExactBlockClasses.java:77: error: cannot find symbol
-FindExactBlockClasses.java:78: error: cannot find symbol
-FindExactBlockClasses.java:80: error: cannot find symbol
-FindExactBlockClasses.java:92: error: cannot find symbol
 INFO  DisableHeavyAnalyzers.java> Disabled analyzer: GCC Exception Handlers (GhidraScript)  
 WARN  Unable to fully apply external demangled Address Table at 14a901e0: std::length_error::vtable (DemangledAddressTable)  
 WARN  Unable to fully apply external demangled Address Table at 14a90618: std::__ndk1::regex_error::typeinfo (DemangledAddressTable)  
@@ -17,16 +12,6 @@ WARN  Unable to fully apply external demangled Address Table at 14a91d80: std::u
 WARN  Unable to fully apply external demangled Address Table at 14a91d90: std::__ndk1::system_error::vtable (DemangledAddressTable)  
 WARN  Unable to fully apply external demangled Address Table at 14a91ed8: std::domain_error::typeinfo (DemangledAddressTable)  
 WARN  Unable to fully apply external demangled Address Table at 14a91ee8: std::domain_error::vtable (DemangledAddressTable)  
-FindExactBlockClasses.java:39: error: cannot find symbol
-FindExactBlockClasses.java:77: error: cannot find symbol
-FindExactBlockClasses.java:78: error: cannot find symbol
-FindExactBlockClasses.java:80: error: cannot find symbol
-FindExactBlockClasses.java:92: error: cannot find symbol
-FindExactBlockClasses.java:39: error: cannot find symbol
-FindExactBlockClasses.java:77: error: cannot find symbol
-FindExactBlockClasses.java:78: error: cannot find symbol
-FindExactBlockClasses.java:80: error: cannot find symbol
-FindExactBlockClasses.java:92: error: cannot find symbol
       uStack_2b0._1_1_ = s_Error_0254a95c[0];
       uStack_2b0._2_1_ = s_Error_0254a95c[1];
       uStack_2b0._3_1_ = s_Error_0254a95c[2];
@@ -86,24 +71,7 @@ FindExactBlockClasses.java:92: error: cannot find symbol
       uStack_290._4_1_ = s_Error_0254a95c[3];
       s_Error_0254a95c._0_4_ = uVar10;
     uStack_170._0_6_ = CONCAT15(s_Error_0254a95c[4],CONCAT41(s_Error_0254a95c._0_4_,10));
-FindExactBlockClasses.java:39: error: cannot find symbol
-FindExactBlockClasses.java:77: error: cannot find symbol
-FindExactBlockClasses.java:78: error: cannot find symbol
-FindExactBlockClasses.java:80: error: cannot find symbol
-FindExactBlockClasses.java:92: error: cannot find symbol
-FindExactBlockClasses.java:39: error: cannot find symbol
-FindExactBlockClasses.java:77: error: cannot find symbol
-FindExactBlockClasses.java:78: error: cannot find symbol
-FindExactBlockClasses.java:80: error: cannot find symbol
-FindExactBlockClasses.java:92: error: cannot find symbol
 INFO  FindClassVtablesViaRTTI.java> ========== SYMBOL: _ZN2v88internal6Parser29BuildRejectPromiseOnExceptionEPNS0_5BlockENS0_8REPLModeE @ 074a47d4  (namespace: Global, type: Label) ========== (GhidraScript)  
 INFO  FindClassVtablesViaRTTI.java> ========== SYMBOL: _ZN6dcsctp24TransmissionControlBlock23IncrementTxErrorCounterENSt6__ndk117basic_string_viewIcNS1_11char_traitsIcEEEE @ 07d2cac8  (namespace: Global, type: Label) ========== (GhidraScript)  
 INFO  FindClassVtablesViaRTTI.java> ========== SYMBOL: _ZN6dcsctp24TransmissionControlBlock19ClearTxErrorCounterEv @ 07d2cad0  (namespace: Global, type: Label) ========== (GhidraScript)  
 INFO  FindClassVtablesViaRTTI.java> ========== SYMBOL: _ZNK6dcsctp24TransmissionControlBlock18HasTooManyTxErrorsEv @ 07d2cad8  (namespace: Global, type: Label) ========== (GhidraScript)  
-FindExactBlockClasses.java:39: error: cannot find symbol
-FindExactBlockClasses.java:77: error: cannot find symbol
-FindExactBlockClasses.java:78: error: cannot find symbol
-FindExactBlockClasses.java:80: error: cannot find symbol
-FindExactBlockClasses.java:92: error: cannot find symbol
-ERROR REPORT SCRIPT ERROR: FindExactBlockClasses.java : The class could not be found. It must be the public class of the .java file: FindExactBlockClasses not found by da1a4c74 [1] (HeadlessAnalyzer) ghidra.app.script.GhidraScriptLoadException: The class could not be found. It must be the public class of the .java file: FindExactBlockClasses not found by da1a4c74 [1]
-Caused by: java.lang.ClassNotFoundException: FindExactBlockClasses not found by da1a4c74 [1]

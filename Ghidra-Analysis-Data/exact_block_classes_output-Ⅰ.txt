@@ -1,0 +1,6 @@
+Listing every recognized C++ class (SymbolType.CLASS) whose own name is exactly: Block or BlockType
+(Unlike the previous script, this does NOT substring-match - a class named
+ e.g. 'BlockEntity' or a namespace merely containing 'Block' will NOT show up here.)
+
+Found 0 matching class(es).
+
