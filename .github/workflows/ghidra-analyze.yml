@@ -62,19 +62,21 @@ jobs:
 
       - name: Commit results directly to the repo
         run: |
-          mkdir -p Ghidra-Analysis-Data
+          mkdir -p Ghidra-Analysis-Data Ghidra-Analysis-Data/Failure-File
 
-          # Appends each run's output as Ghidra-Analysis-Data/<basename>-N.txt,
-          # N in roman numerals (Ⅰ, Ⅱ, Ⅲ, ...), one series per basename -
-          # matching this repo's existing file-naming convention. Skips
-          # creating a new numbered file when this run's output is
-          # byte-identical to the latest existing one, so an unchanged
-          # script doesn't pile up duplicate files run after run.
-          # analyze.log (raw Ghidra stdout) is intentionally not archived -
-          # the three scripts' own structured output files are what matter.
+          # Appends each run's output as <dir>/<basename>-N.txt, N in roman
+          # numerals (Ⅰ, Ⅱ, Ⅲ, ...), one series per basename - matching this
+          # repo's existing file-naming convention. Skips creating a new
+          # numbered file when this run's output is byte-identical to the
+          # latest existing one, so an unchanged script doesn't pile up
+          # duplicate files run after run.
+          # analyze.log (raw Ghidra stdout) is intentionally not archived in
+          # full - the scripts' own structured output files are what matter;
+          # a short error-only extract is captured separately below instead.
           archive_numbered() {
             local src="$1"
             local base="$2"
+            local dir="$3"
             [ -f "$src" ] || return 0
 
             local -a ROMAN=(Ⅰ Ⅱ Ⅲ Ⅳ Ⅴ Ⅵ Ⅶ Ⅷ Ⅸ Ⅹ Ⅺ Ⅻ)
@@ -82,7 +84,7 @@ jobs:
             local latest_file=""
             local i
             for i in "${!ROMAN[@]}"; do
-              local candidate="Ghidra-Analysis-Data/${base}-${ROMAN[$i]}.txt"
+              local candidate="${dir}/${base}-${ROMAN[$i]}.txt"
               if [ -f "$candidate" ]; then
                 count=$((i + 1))
                 latest_file="$candidate"
@@ -96,21 +98,41 @@ jobs:
 
             if [ "$count" -ge "${#ROMAN[@]}" ]; then
               echo "WARNING: ran out of roman numerals for $base (reached ${ROMAN[-1]}); using plain index $((count + 1)) instead"
-              cp "$src" "Ghidra-Analysis-Data/${base}-$((count + 1)).txt"
-              git add "Ghidra-Analysis-Data/${base}-$((count + 1)).txt"
+              cp "$src" "${dir}/${base}-$((count + 1)).txt"
+              git add "${dir}/${base}-$((count + 1)).txt"
               return 0
             fi
 
             local next="${ROMAN[$count]}"
-            cp "$src" "Ghidra-Analysis-Data/${base}-${next}.txt"
-            git add "Ghidra-Analysis-Data/${base}-${next}.txt"
+            cp "$src" "${dir}/${base}-${next}.txt"
+            git add "${dir}/${base}-${next}.txt"
           }
 
-          archive_numbered state_refs_output.txt state_refs_output
-          archive_numbered caller_refs_output.txt caller_refs_output
-          archive_numbered accessor_refs_output.txt accessor_refs_output
-          archive_numbered rtti_vtable_refs_output.txt rtti_vtable_refs_output
-          archive_numbered exact_block_classes_output.txt exact_block_classes_output
+          # Scripts that have already dead-ended (kept for history, but out
+          # of the way) go in Failure-File/. state_refs_output is the one
+          # confirmed-useful result (the aux-value formulas); the newest
+          # script (exact_block_classes_output) stays in the main folder
+          # until it's resolved one way or the other.
+          archive_numbered state_refs_output.txt state_refs_output Ghidra-Analysis-Data
+          archive_numbered caller_refs_output.txt caller_refs_output Ghidra-Analysis-Data/Failure-File
+          archive_numbered accessor_refs_output.txt accessor_refs_output Ghidra-Analysis-Data/Failure-File
+          archive_numbered rtti_vtable_refs_output.txt rtti_vtable_refs_output Ghidra-Analysis-Data/Failure-File
+          archive_numbered exact_block_classes_output.txt exact_block_classes_output Ghidra-Analysis-Data
+
+          # Short, always-overwritten diagnostic: just the error/exception/
+          # script-compile lines from this run's raw Ghidra log, so a run
+          # that silently produces no output (e.g. a script compile error -
+          # ghidra_scripts/ compiles as one bundle, so one broken file can
+          # silently take every script down with it) is still debuggable
+          # without archiving the full multi-MB raw log.
+          grep -iE "error|exception|could not compile|compil(e|ation).*(fail|error)" analyze.log \
+            > Ghidra-Analysis-Data/last_run_errors.txt 2>/dev/null || true
+          if [ -s Ghidra-Analysis-Data/last_run_errors.txt ]; then
+            git add Ghidra-Analysis-Data/last_run_errors.txt
+          else
+            rm -f Ghidra-Analysis-Data/last_run_errors.txt
+            git rm --cached --ignore-unmatch -q Ghidra-Analysis-Data/last_run_errors.txt 2>/dev/null || true
+          fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
