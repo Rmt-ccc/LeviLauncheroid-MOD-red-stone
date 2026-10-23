@@ -39,9 +39,7 @@ jobs:
             -preScript DisableHeavyAnalyzers.java \
             -postScript FindStateRefs.java \
             -postScript FindCallers.java \
-            -postScript FindAccessorStrings.java \
-            -postScript FindClassVtablesViaRTTI.java \
-            -postScript FindExactBlockClasses.java \
+            -postScript FindFunctionPointerRefs.java \
             -deleteProject \
             -max-cpu 2 \
             -analysisTimeoutPerFile 1500 \
@@ -54,9 +52,7 @@ jobs:
           path: |
             state_refs_output.txt
             caller_refs_output.txt
-            accessor_refs_output.txt
-            rtti_vtable_refs_output.txt
-            exact_block_classes_output.txt
+            funcptr_refs_output.txt
             analyze.log
           if-no-files-found: warn
 
@@ -108,16 +104,18 @@ jobs:
             git add "${dir}/${base}-${next}.txt"
           }
 
-          # Scripts that have already dead-ended (kept for history, but out
-          # of the way) go in Failure-File/. state_refs_output is the one
-          # confirmed-useful result (the aux-value formulas); the newest
-          # script (exact_block_classes_output) stays in the main folder
-          # until it's resolved one way or the other.
+          # Class-name/RTTI based scripts (accessor_refs_output,
+          # rtti_vtable_refs_output, exact_block_classes_output) dead-ended
+          # after 5 attempts and are no longer run - their old output stays
+          # in Failure-File/ for history but nothing new lands there.
+          # Current active line of investigation: state_refs_output (aux-value
+          # formulas, confirmed-useful), caller_refs_output (confirmed no
+          # direct callers for the redstone_signal constructor - informative
+          # negative result), funcptr_refs_output (new: where that
+          # constructor's address is materialized as data).
           archive_numbered state_refs_output.txt state_refs_output Ghidra-Analysis-Data
-          archive_numbered caller_refs_output.txt caller_refs_output Ghidra-Analysis-Data/Failure-File
-          archive_numbered accessor_refs_output.txt accessor_refs_output Ghidra-Analysis-Data/Failure-File
-          archive_numbered rtti_vtable_refs_output.txt rtti_vtable_refs_output Ghidra-Analysis-Data/Failure-File
-          archive_numbered exact_block_classes_output.txt exact_block_classes_output Ghidra-Analysis-Data
+          archive_numbered caller_refs_output.txt caller_refs_output Ghidra-Analysis-Data
+          archive_numbered funcptr_refs_output.txt funcptr_refs_output Ghidra-Analysis-Data
 
           # Short, always-overwritten diagnostic: just the error/exception/
           # script-compile lines from this run's raw Ghidra log, so a run
