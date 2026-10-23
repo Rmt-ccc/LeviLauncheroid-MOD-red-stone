@@ -1,0 +1,18 @@
+Total relocation records in program: 988333
+Scanning for any relocation whose addend/value/bytes encode target 0x11633944 ...
+
+Scanned 988333 relocation record(s) total, 0 matching 0x11633944.
+
+No relocation record encodes the target address either. Combined with the earlier
+zero-hit code-reference scan and zero-hit raw-byte scan, this means: across every
+representation Ghidra's loader exposes (disassembled code, raw memory bytes, and
+the relocation table itself), nothing in this binary materializes 0x11633944 as data anywhere. The remaining explanations are:
+  (a) the real call site uses a different address-construction idiom this script
+      doesn't model yet (e.g. a 32-bit PC-relative delta table, not a 64-bit pointer
+      table - common for ARM64 "relative vtables"), or
+  (b) FUN_11633944's actual entry address, as Ghidra labeled it, is slightly off from
+      the address any table/relocation actually targets (e.g. table points a few bytes
+      earlier/later - a prologue variant Ghidra split differently), or
+  (c) this function is simply dead/unreachable code in the shipped binary (a build-time
+      artifact never actually invoked at runtime) and the real runtime read path for
+      redstone_signal goes through an entirely different, not-yet-found function.
