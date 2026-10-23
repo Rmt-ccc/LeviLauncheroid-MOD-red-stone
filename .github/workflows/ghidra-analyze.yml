@@ -40,6 +40,7 @@ jobs:
             -postScript FindStateRefs.java \
             -postScript FindCallers.java \
             -postScript FindFunctionPointerRefs.java \
+            -postScript ScanRelocationsForTarget.java \
             -deleteProject \
             -max-cpu 2 \
             -analysisTimeoutPerFile 1500 \
@@ -53,6 +54,7 @@ jobs:
             state_refs_output.txt
             caller_refs_output.txt
             funcptr_refs_output.txt
+            relocation_scan_output.txt
             analyze.log
           if-no-files-found: warn
 
@@ -116,6 +118,7 @@ jobs:
           archive_numbered state_refs_output.txt state_refs_output Ghidra-Analysis-Data
           archive_numbered caller_refs_output.txt caller_refs_output Ghidra-Analysis-Data
           archive_numbered funcptr_refs_output.txt funcptr_refs_output Ghidra-Analysis-Data
+          archive_numbered relocation_scan_output.txt relocation_scan_output Ghidra-Analysis-Data
 
           # Short, always-overwritten diagnostic: just the error/exception/
           # script-compile lines from this run's raw Ghidra log, so a run
