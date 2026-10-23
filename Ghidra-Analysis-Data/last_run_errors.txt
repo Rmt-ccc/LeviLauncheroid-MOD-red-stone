@@ -71,7 +71,3 @@ WARN  Unable to fully apply external demangled Address Table at 14a91ee8: std::d
       uStack_290._4_1_ = s_Error_0254a95c[3];
       s_Error_0254a95c._0_4_ = uVar10;
     uStack_170._0_6_ = CONCAT15(s_Error_0254a95c[4],CONCAT41(s_Error_0254a95c._0_4_,10));
-INFO  FindClassVtablesViaRTTI.java> ========== SYMBOL: _ZN2v88internal6Parser29BuildRejectPromiseOnExceptionEPNS0_5BlockENS0_8REPLModeE @ 074a47d4  (namespace: Global, type: Label) ========== (GhidraScript)  
-INFO  FindClassVtablesViaRTTI.java> ========== SYMBOL: _ZN6dcsctp24TransmissionControlBlock23IncrementTxErrorCounterENSt6__ndk117basic_string_viewIcNS1_11char_traitsIcEEEE @ 07d2cac8  (namespace: Global, type: Label) ========== (GhidraScript)  
-INFO  FindClassVtablesViaRTTI.java> ========== SYMBOL: _ZN6dcsctp24TransmissionControlBlock19ClearTxErrorCounterEv @ 07d2cad0  (namespace: Global, type: Label) ========== (GhidraScript)  
-INFO  FindClassVtablesViaRTTI.java> ========== SYMBOL: _ZNK6dcsctp24TransmissionControlBlock18HasTooManyTxErrorsEv @ 07d2cad8  (namespace: Global, type: Label) ========== (GhidraScript)  
