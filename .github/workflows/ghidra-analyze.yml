@@ -39,8 +39,7 @@ jobs:
             -preScript DisableHeavyAnalyzers.java \
             -postScript FindStateRefs.java \
             -postScript FindCallers.java \
-            -postScript FindFunctionPointerRefs.java \
-            -postScript ScanRelocationsForTarget.java \
+            -postScript FindBlockIdRefs.java \
             -deleteProject \
             -max-cpu 2 \
             -analysisTimeoutPerFile 1500 \
@@ -53,8 +52,7 @@ jobs:
           path: |
             state_refs_output.txt
             caller_refs_output.txt
-            funcptr_refs_output.txt
-            relocation_scan_output.txt
+            blockid_refs_output.txt
             analyze.log
           if-no-files-found: warn
 
@@ -108,17 +106,23 @@ jobs:
 
           # Class-name/RTTI based scripts (accessor_refs_output,
           # rtti_vtable_refs_output, exact_block_classes_output) dead-ended
-          # after 5 attempts and are no longer run - their old output stays
-          # in Failure-File/ for history but nothing new lands there.
-          # Current active line of investigation: state_refs_output (aux-value
-          # formulas, confirmed-useful), caller_refs_output (confirmed no
-          # direct callers for the redstone_signal constructor - informative
-          # negative result), funcptr_refs_output (new: where that
-          # constructor's address is materialized as data).
+          # after 5 attempts; funcptr_refs_output/relocation_scan_output
+          # (tracing how the registration-time constructor FUN_11633944 is
+          # reached) also dead-ended after 3 independent techniques found
+          # nothing. None of these run anymore - old output stays in
+          # Failure-File/ for history, nothing new lands there.
+          # Current active line: state_refs_output (aux-value formulas,
+          # confirmed-useful), caller_refs_output (confirmed no direct
+          # callers - informative negative that justified the pivot below),
+          # blockid_refs_output (new: pivoted from property-name strings to
+          # block-ID strings like "minecraft:redstone_wire", targeting the
+          # engine's actual runtime tick/simulation code instead of its
+          # one-time schema-registration code).
           archive_numbered state_refs_output.txt state_refs_output Ghidra-Analysis-Data
           archive_numbered caller_refs_output.txt caller_refs_output Ghidra-Analysis-Data
-          archive_numbered funcptr_refs_output.txt funcptr_refs_output Ghidra-Analysis-Data
-          archive_numbered relocation_scan_output.txt relocation_scan_output Ghidra-Analysis-Data
+          archive_numbered blockid_refs_output.txt blockid_refs_output Ghidra-Analysis-Data
+          archive_numbered funcptr_refs_output.txt funcptr_refs_output Ghidra-Analysis-Data/Failure-File
+          archive_numbered relocation_scan_output.txt relocation_scan_output Ghidra-Analysis-Data/Failure-File
 
           # Short, always-overwritten diagnostic: just the error/exception/
           # script-compile lines from this run's raw Ghidra log, so a run
