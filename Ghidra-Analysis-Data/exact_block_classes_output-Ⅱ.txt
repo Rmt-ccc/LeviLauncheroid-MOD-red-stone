@@ -1,0 +1,14 @@
+Listing every distinct namespace whose own (leaf) name is exactly: Block or BlockType
+(Found by checking every symbol's immediate parent namespace - no substring
+ matching, and no dependency on Ghidra having tagged it as a 'class' symbol.)
+
+Found 1 matching namespace(s).
+
+========== NAMESPACE: leveldb::Block  (own name: Block) ==========
+  4 direct member symbol(s):
+    Function  Block @ 07c74b50
+    Function  ~Block @ 07c74b94
+    Function  NewIterator @ 07c74bac
+    Class  Iter @ NO ADDRESS
+
+
