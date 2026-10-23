@@ -58,6 +58,12 @@ public class FindFunctionPointerRefs extends GhidraScript {
         0x11633944L,
     };
 
+    // Address of the "redstone_signal" string's own data, as found by
+    // FindStateRefs.java. Used to cross-check whether a candidate
+    // function-pointer table row also has this string's address nearby
+    // (which would confirm it's the property-descriptor row we want).
+    private static final long REDSTONE_SIGNAL_STRING_ADDR = 0x022f76cbL;
+
     private static final long FUNC_PROLOGUE_MARKER_OFFSET = 0x0e656420L;
 
     private PrintWriter out;
@@ -89,6 +95,25 @@ public class FindFunctionPointerRefs extends GhidraScript {
         for (long target : TARGETS) {
             Address targetAddr = toAddr(target);
             emit("========== FUNCTION ADDRESS: " + targetAddr + " ==========");
+
+            emit("  -- raw 8-byte little-endian occurrences of this address as DATA --");
+            List<Address> rawHits = findRawPointerAddresses(target);
+            if (rawHits.isEmpty()) {
+                emit("    (not found as a raw 8-byte pointer value in any initialized memory block either)");
+            } else {
+                for (Address hit : rawHits) {
+                    MemoryBlock blk = currentProgram.getMemory().getBlock(hit);
+                    emit("    raw pointer at " + hit
+                            + "  (block: " + (blk == null ? "?" : blk.getName()) + ")");
+                    boolean nearStringPtr = scanWindowForValue(hit, 0x100, REDSTONE_SIGNAL_STRING_ADDR);
+                    if (nearStringPtr) {
+                        emit("      -> redstone_signal string pointer (022f76cb) also found within +/-0x100 of here");
+                    }
+                    dumpHexWindow(hit, 0x40);
+                }
+            }
+            emit("");
+
             List<Address> refs = refIndex.get(target);
             if (refs == null || refs.isEmpty()) {
                 emit("  (no adrp+add/ldr/str materialization of this address found in code)");
@@ -154,6 +179,79 @@ public class FindFunctionPointerRefs extends GhidraScript {
         decomp.dispose();
         out.close();
         println("Done. Wrote funcptr_refs_output.txt (also mirrored to stdout above)");
+    }
+
+    // Raw byte search across all initialized memory blocks for the exact
+    // 8-byte little-endian encoding of `target` - the direct analogue of
+    // FindStateRefs.java's findExactStringAddresses, but for a pointer
+    // value instead of ASCII text. Covers vtable-style static data (a
+    // bare address baked into a data section via a build-time/load-time
+    // relocation) that no adrp+add/ldr/str code sequence would ever
+    // produce, since nothing in code computes it - it's just sitting
+    // there as a table entry.
+    private List<Address> findRawPointerAddresses(long target) throws Exception {
+        List<Address> results = new ArrayList<>();
+        byte[] pattern = new byte[8];
+        for (int i = 0; i < 8; i++) {
+            pattern[i] = (byte) ((target >>> (8 * i)) & 0xFF);
+        }
+        Memory mem = currentProgram.getMemory();
+        for (MemoryBlock block : mem.getBlocks()) {
+            if (!block.isInitialized()) continue;
+            Address start = block.getStart();
+            Address end = block.getEnd();
+            Address cursor = start;
+            while (cursor != null && cursor.compareTo(end) <= 0) {
+                Address hit = mem.findBytes(cursor, end, pattern, null, true, monitor);
+                if (hit == null) break;
+                results.add(hit);
+                try {
+                    cursor = hit.add(1);
+                } catch (Exception overflow) {
+                    break;
+                }
+            }
+        }
+        return results;
+    }
+
+    // True if the exact 8-byte little-endian encoding of `value` appears
+    // anywhere within +/- windowBytes of `center`.
+    private boolean scanWindowForValue(Address center, int windowBytes, long value) {
+        try {
+            Address winStart = center.subtract(windowBytes);
+            Address winEnd = center.add(windowBytes);
+            byte[] pattern = new byte[8];
+            for (int i = 0; i < 8; i++) {
+                pattern[i] = (byte) ((value >>> (8 * i)) & 0xFF);
+            }
+            Address hit = currentProgram.getMemory()
+                    .findBytes(winStart, winEnd, pattern, null, true, monitor);
+            return hit != null;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private void dumpHexWindow(Address center, int windowBytes) {
+        try {
+            Address winStart = center.subtract(windowBytes);
+            int total = windowBytes * 2 + 1;
+            byte[] buf = new byte[total];
+            int n = currentProgram.getMemory().getBytes(winStart, buf);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < n; i++) {
+                if (i % 16 == 0) {
+                    if (i > 0) emit("      " + sb);
+                    sb = new StringBuilder();
+                    sb.append(winStart.add(i)).append(":  ");
+                }
+                sb.append(String.format("%02x ", buf[i]));
+            }
+            if (sb.length() > 0) emit("      " + sb);
+        } catch (Exception ex) {
+            emit("      (failed to dump hex window: " + ex.getMessage() + ")");
+        }
     }
 
     private void dumpWindow(Address from) {
