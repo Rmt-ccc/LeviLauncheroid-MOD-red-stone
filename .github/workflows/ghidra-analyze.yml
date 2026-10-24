@@ -39,8 +39,6 @@ jobs:
             -preScript DisableHeavyAnalyzers.java \
             -postScript FindStateRefs.java \
             -postScript FindCallers.java \
-            -postScript FindBlockIdRefs.java \
-            -postScript ScanKnownSignatures.java \
             -deleteProject \
             -max-cpu 2 \
             -analysisTimeoutPerFile 1500 \
@@ -53,7 +51,6 @@ jobs:
           path: |
             state_refs_output.txt
             caller_refs_output.txt
-            signature_scan_output.txt
             analyze.log
           if-no-files-found: warn
 
@@ -105,23 +102,27 @@ jobs:
             git add "${dir}/${base}-${next}.txt"
           }
 
-          # Class-name/RTTI based scripts, funcptr_refs_output/
-          # relocation_scan_output (reachability of FUN_11633944), and
-          # blockid_refs_output (block-ID string search) all dead-ended -
-          # string/name-based search can't reach runtime tick/simulation
-          # code at all, since the engine resolves every name to a numeric
-          # ID once at load time. None of these run anymore - old output
-          # stays in Failure-File/ for history, nothing new lands there.
+          # Dead ends, newest first: signature_scan_output (BedrockTools'
+          # AOB signatures - 0 matches for BlockSourceGetBlock, and the
+          # few matches on the other two signatures decompiled to
+          # unrelated code = false positives; root cause: AOB signatures
+          # are tied to one specific Minecraft build, and this repo's
+          # libminecraftpe.so is a Trial-xapk build whose embedded
+          # format_version gates run up to 1.21.120, almost certainly
+          # newer than whatever build BedrockTools' current signatures
+          # were derived from), blockid_refs_output/funcptr_refs_output/
+          # relocation_scan_output/class-RTTI scripts (string/name-based
+          # search can't reach runtime tick/simulation code at all, since
+          # the engine resolves every name to a numeric ID once at load
+          # time). None of these run anymore - old output stays in
+          # Failure-File/ for history, nothing new lands there.
           # Current active line: state_refs_output (aux-value formulas,
           # confirmed-useful), caller_refs_output (confirmed no direct
-          # callers - informative negative), signature_scan_output (new:
-          # AOB byte-pattern signatures from QYCottage/BedrockTools'
-          # own working implementation, locating BlockSource::getBlock/
-          # getBrightness/isSolidBlockingBlock in this binary directly,
-          # independent of any string or symbol).
+          # callers - informative negative). Next step needs a user
+          # decision (see chat) before further Ghidra scripting.
           archive_numbered state_refs_output.txt state_refs_output Ghidra-Analysis-Data
           archive_numbered caller_refs_output.txt caller_refs_output Ghidra-Analysis-Data
-          archive_numbered signature_scan_output.txt signature_scan_output Ghidra-Analysis-Data
+          archive_numbered signature_scan_output.txt signature_scan_output Ghidra-Analysis-Data/Failure-File
           archive_numbered blockid_refs_output.txt blockid_refs_output Ghidra-Analysis-Data/Failure-File
           archive_numbered funcptr_refs_output.txt funcptr_refs_output Ghidra-Analysis-Data/Failure-File
           archive_numbered relocation_scan_output.txt relocation_scan_output Ghidra-Analysis-Data/Failure-File
