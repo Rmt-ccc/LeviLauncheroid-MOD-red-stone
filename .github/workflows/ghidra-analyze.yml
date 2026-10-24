@@ -40,6 +40,7 @@ jobs:
             -postScript FindStateRefs.java \
             -postScript FindCallers.java \
             -postScript FindBlockIdRefs.java \
+            -postScript ScanKnownSignatures.java \
             -deleteProject \
             -max-cpu 2 \
             -analysisTimeoutPerFile 1500 \
@@ -52,7 +53,7 @@ jobs:
           path: |
             state_refs_output.txt
             caller_refs_output.txt
-            blockid_refs_output.txt
+            signature_scan_output.txt
             analyze.log
           if-no-files-found: warn
 
@@ -104,23 +105,24 @@ jobs:
             git add "${dir}/${base}-${next}.txt"
           }
 
-          # Class-name/RTTI based scripts (accessor_refs_output,
-          # rtti_vtable_refs_output, exact_block_classes_output) dead-ended
-          # after 5 attempts; funcptr_refs_output/relocation_scan_output
-          # (tracing how the registration-time constructor FUN_11633944 is
-          # reached) also dead-ended after 3 independent techniques found
-          # nothing. None of these run anymore - old output stays in
-          # Failure-File/ for history, nothing new lands there.
+          # Class-name/RTTI based scripts, funcptr_refs_output/
+          # relocation_scan_output (reachability of FUN_11633944), and
+          # blockid_refs_output (block-ID string search) all dead-ended -
+          # string/name-based search can't reach runtime tick/simulation
+          # code at all, since the engine resolves every name to a numeric
+          # ID once at load time. None of these run anymore - old output
+          # stays in Failure-File/ for history, nothing new lands there.
           # Current active line: state_refs_output (aux-value formulas,
           # confirmed-useful), caller_refs_output (confirmed no direct
-          # callers - informative negative that justified the pivot below),
-          # blockid_refs_output (new: pivoted from property-name strings to
-          # block-ID strings like "minecraft:redstone_wire", targeting the
-          # engine's actual runtime tick/simulation code instead of its
-          # one-time schema-registration code).
+          # callers - informative negative), signature_scan_output (new:
+          # AOB byte-pattern signatures from QYCottage/BedrockTools'
+          # own working implementation, locating BlockSource::getBlock/
+          # getBrightness/isSolidBlockingBlock in this binary directly,
+          # independent of any string or symbol).
           archive_numbered state_refs_output.txt state_refs_output Ghidra-Analysis-Data
           archive_numbered caller_refs_output.txt caller_refs_output Ghidra-Analysis-Data
-          archive_numbered blockid_refs_output.txt blockid_refs_output Ghidra-Analysis-Data
+          archive_numbered signature_scan_output.txt signature_scan_output Ghidra-Analysis-Data
+          archive_numbered blockid_refs_output.txt blockid_refs_output Ghidra-Analysis-Data/Failure-File
           archive_numbered funcptr_refs_output.txt funcptr_refs_output Ghidra-Analysis-Data/Failure-File
           archive_numbered relocation_scan_output.txt relocation_scan_output Ghidra-Analysis-Data/Failure-File
 
