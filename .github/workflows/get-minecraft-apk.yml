@@ -1,0 +1,83 @@
+name: Get Minecraft Trial (via gplaydl)
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Google Play package name to download
+        required: false
+        default: com.mojang.minecrafttrialpe
+
+permissions:
+  contents: write
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install gplaydl (anonymous Google Play downloader, same backend as Aurora Store)
+        run: |
+          pip install --break-system-packages "git+https://github.com/appknox/gplaydl.git"
+
+      - name: Authenticate anonymously and download the package (arm64-v8a)
+        run: |
+          mkdir -p apk_dl
+          gplaydl auth
+          gplaydl download "${{ inputs.package }}" --arch arm64-v8a -o apk_dl
+          echo "Downloaded files:"
+          ls -lh apk_dl/
+
+      - name: Extract libminecraftpe.so (arm64-v8a) from whichever split has it
+        run: |
+          mkdir -p extracted
+          found=""
+          for f in apk_dl/*.apk; do
+            [ -f "$f" ] || continue
+            echo "Checking $f for lib/arm64-v8a/libminecraftpe.so ..."
+            if unzip -l "$f" | grep -q "lib/arm64-v8a/libminecraftpe.so"; then
+              unzip -p "$f" lib/arm64-v8a/libminecraftpe.so > extracted/libminecraftpe.so
+              echo "Found it in $f"
+              found="$f"
+              break
+            fi
+          done
+          if [ -z "$found" ]; then
+            echo "libminecraftpe.so not found in any downloaded split - listing all apk contents for debugging:"
+            for f in apk_dl/*.apk; do echo "--- $f ---"; unzip -l "$f" | grep -i "\.so$" || true; done
+            exit 1
+          fi
+          ls -lh extracted/libminecraftpe.so
+
+      - name: Record the Minecraft version this binary came from
+        run: |
+          mkdir -p extracted
+          # aapt isn't guaranteed present on this runner; fall back to a plain grep
+          # of the base APK's AndroidManifest-adjacent strings if aapt is missing.
+          if command -v aapt >/dev/null 2>&1; then
+            base_apk=$(ls apk_dl/*.apk | head -n1)
+            aapt dump badging "$base_apk" | grep -E "versionCode|versionName" | tee extracted/version_info.txt || true
+          else
+            echo "aapt not available on this runner; version_info.txt not generated" | tee extracted/version_info.txt
+          fi
+
+      - name: Upload extracted .so as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: libminecraftpe-fresh
+          path: |
+            extracted/libminecraftpe.so
+            extracted/version_info.txt
+          if-no-files-found: warn
+
+      - name: Publish as the ghidra-binary release asset (overwrites the one Ghidra Analyze downloads)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload ghidra-binary extracted/libminecraftpe.so --repo ${{ github.repository }} --clobber
