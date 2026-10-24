@@ -10,15 +10,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install apkeep with cargo
-        run: cargo install apkeep
+      - name: Install apkeep binary (fast)
+        run: |
+          curl -L -o apkeep.tar.gz https://github.com/EFForg/apkeep/releases/download/v0.17.0/apkeep-x86_64-unknown-linux-gnu.tar.gz
+          tar xzf apkeep.tar.gz
+          chmod +x apkeep
+          sudo mv apkeep /usr/local/bin/
+          apkeep --version
 
       - name: Download Minecraft Trial
         run: |
           mkdir -p apk
-          echo "Trying apk-pure first..."
-          ~/.cargo/bin/apkeep -a com.mojang.minecrafttrialpe -d apk-pure apk/ || \
-          ~/.cargo/bin/apkeep -a com.mojang.minecrafttrialpe apk/
+          # v0.17.0は旧表記 apkpure / googleplay でOK、承認不要
+          apkeep -a com.mojang.minecrafttrialpe -d apkpure apk/ || \
+          apkeep -a com.mojang.minecrafttrialpe -d googleplay apk/
           ls -lh apk/
 
       - name: Upload APK/XAPK
