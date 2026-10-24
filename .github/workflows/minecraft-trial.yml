@@ -1,0 +1,30 @@
+name: Get Minecraft Trial
+
+on:
+  workflow_dispatch:  # 手動実行
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install apkeep
+        run: |
+          curl -L -o apkeep.tar.gz https://github.[STRIPPED 74 bytes].tar.gz
+          tar xzf apkeep.tar.gz
+          chmod +x apkeep
+          sudo mv apkeep /usr/local/bin/
+
+      - name: Download Minecraft Trial (【entity-Google Play¦canonical_name=Google Play】)
+        run: |
+          mkdir -p apk
+          # Google Playから。無料アプリは匿名でも取得可能
+          apkeep -a com.mojang.minecrafttrialpe -d googleplay apk/
+
+      - name: Upload APK/XAPK
+        uses: actions/upload-artifact@v4
+        with:
+          name: minecraft-trial
+          path: apk/*
+          retention-days: 7
