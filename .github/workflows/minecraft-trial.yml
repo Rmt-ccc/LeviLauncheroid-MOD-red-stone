@@ -1,4 +1,4 @@
-name: Get 【entity-Minecraft¦canonical_name=Minecraft】 Trial
+name: Get Minecraft Trial
 
 on:
   workflow_dispatch:
@@ -9,48 +9,56 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Download 【entity-Minecraft¦canonical_name=Minecraft】 Trial from APKPure
+      - name: Download via APKPure API (bypass Cloudflare)
         run: |
-          pip install requests beautifulsoup4
           mkdir -p apk
-          python - << 'PY'
-          import requests, re
-          from bs4 import BeautifulSoup
+          pkg="com.mojang.minecrafttrialpe"
+          echo "Fetching $pkg from api.pureapk.com..."
+          
+          # apkeepと同じAPIエンドポイントを使う
+          curl -sS "https://api.pureapk.com/m/v3/cms/app_version?hl=en-US&package_name=$pkg" \
+            -H "x-sv: 29" \
+            -H "x-abis: arm64-v8a,armeabi-v7a,armeabi" \
+            -H "x-gp: 1" -o api.json
 
-          pkg = "com.mojang.minecrafttrialpe"
-          # APKPureのダウンロードページ
-          url = f"https://apkpure.com/minecraft-trial/{pkg}/download"
-          headers = {"User-Agent": "Mozilla/5.0"}
-          r = requests.get(url, headers=headers, timeout=30)
-          # downloadリンクを探す
-          m = re.search(r'https://d\.apkpure\.com/[^"\']+\.apk[^"\']*', r.text)
+          cat api.json | head -c 1000
+          echo ""
+
+          python3 - << 'PY'
+          import json, re, requests, sys
+          with open("api.json","rb") as f:
+              data=f.read().decode(errors="ignore")
+          # apkeepの実装と同じく /APK を含むURLを探す
+          m = re.findall(r'https://[^"\s]+\.apk[^"\s]*', data)
+          # pureapkのAPIはエスケープされてる事があるのでstrings的に探す
           if not m:
-              # 予備: apkpureの /download ページの2回目のリダイレクトを取得
-              soup = BeautifulSoup(r.text, 'html.parser')
-              a = soup.find('a', id='download_link')
-              if a:
-                  m = [a.get('href')]
+              m = re.findall(r'https://.*?/APK/[^"\s]+', data)
+          # jsonとしてパースできる場合も試す
+          try:
+              j=json.loads(data)
+              txt=json.dumps(j)
+              m2=re.findall(r'https://[^\s"]+\.apk', txt)
+              m.extend(m2)
+          except: pass
+
+          print(f"Found candidates: {m[:5]}")
           if not m:
-              print("download link not found")
-              print(r.text[:2000])
-              exit(1)
-          dl = m[0] if isinstance(m, tuple) else m.group(0) if hasattr(m, 'group') else m[0]
-          print(f"Found: {dl}")
-          with requests.get(dl, headers=headers, stream=True, timeout=120) as resp:
-              resp.raise_for_status()
-              with open(f"apk/Minecraft-Trial.apk", "wb") as f:
-                  for chunk in resp.iter_content(8192):
-                      f.write(chunk)
-          print("done")
+              print("No apk url found in api.json")
+              sys.exit(1)
+          # 最初のAPKを使う（latest）
+          url = m[0].replace("\\u002F","/")
+          print(f"Downloading {url}")
+          headers={"User-Agent":"Mozilla/5.0"}
+          with requests.get(url, headers=headers, stream=True, timeout=300) as r:
+              r.raise_for_status()
+              with open("apk/Minecraft-Trial.apk","wb") as out:
+                  for chunk in r.iter_content(8192):
+                      out.write(chunk)
+          print("Saved")
           PY
           ls -lh apk/
 
-      - name: Upload APK
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: minecraft-trial
