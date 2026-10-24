@@ -1,4 +1,4 @@
-name: Get Minecraft Trial
+name: Get 【entity-Minecraft¦canonical_name=Minecraft】 Trial
 
 on:
   workflow_dispatch:
@@ -7,22 +7,50 @@ jobs:
   download:
     runs-on: ubuntu-latest
     steps:
-            - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-            - name: Install apkeep 0.17.0 (fast, no check)
-        run: |
-          cargo install apkeep --version 0.17.0 --locked
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-            - name: Download Minecraft Trial
+      - name: Download 【entity-Minecraft¦canonical_name=Minecraft】 Trial from APKPure
         run: |
+          pip install requests beautifulsoup4
           mkdir -p apk
-          apkeep -a com.mojang.minecrafttrialpe -d apkpure apk/ || \
-          apkeep -a com.mojang.minecrafttrialpe -d googleplay apk/
+          python - << 'PY'
+          import requests, re
+          from bs4 import BeautifulSoup
+
+          pkg = "com.mojang.minecrafttrialpe"
+          # APKPureのダウンロードページ
+          url = f"https://apkpure.com/minecraft-trial/{pkg}/download"
+          headers = {"User-Agent": "Mozilla/5.0"}
+          r = requests.get(url, headers=headers, timeout=30)
+          # downloadリンクを探す
+          m = re.search(r'https://d\.apkpure\.com/[^"\']+\.apk[^"\']*', r.text)
+          if not m:
+              # 予備: apkpureの /download ページの2回目のリダイレクトを取得
+              soup = BeautifulSoup(r.text, 'html.parser')
+              a = soup.find('a', id='download_link')
+              if a:
+                  m = [a.get('href')]
+          if not m:
+              print("download link not found")
+              print(r.text[:2000])
+              exit(1)
+          dl = m[0] if isinstance(m, tuple) else m.group(0) if hasattr(m, 'group') else m[0]
+          print(f"Found: {dl}")
+          with requests.get(dl, headers=headers, stream=True, timeout=120) as resp:
+              resp.raise_for_status()
+              with open(f"apk/Minecraft-Trial.apk", "wb") as f:
+                  for chunk in resp.iter_content(8192):
+                      f.write(chunk)
+          print("done")
+          PY
           ls -lh apk/
 
-            - name: Upload APK/XAPK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: minecraft-trial
