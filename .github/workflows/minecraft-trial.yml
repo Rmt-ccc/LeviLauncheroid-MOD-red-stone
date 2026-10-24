@@ -7,26 +7,22 @@ jobs:
   download:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+            - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install apkeep binary (fast)
+            - name: Install apkeep 0.17.0 (fast, no check)
         run: |
-          curl -L -o apkeep.tar.gz https://github.com/EFForg/apkeep/releases/download/v0.17.0/apkeep-x86_64-unknown-linux-gnu.tar.gz
-          tar xzf apkeep.tar.gz
-          chmod +x apkeep
-          sudo mv apkeep /usr/local/bin/
-          apkeep --version
+          cargo install apkeep --version 0.17.0 --locked
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-      - name: Download Minecraft Trial
+            - name: Download Minecraft Trial
         run: |
           mkdir -p apk
-          # v0.17.0は旧表記 apkpure / googleplay でOK、承認不要
           apkeep -a com.mojang.minecrafttrialpe -d apkpure apk/ || \
           apkeep -a com.mojang.minecrafttrialpe -d googleplay apk/
           ls -lh apk/
 
-      - name: Upload APK/XAPK
+            - name: Upload APK/XAPK
         uses: actions/upload-artifact@v4
         with:
           name: minecraft-trial
