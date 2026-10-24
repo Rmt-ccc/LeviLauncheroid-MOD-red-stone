@@ -7,7 +7,8 @@ jobs:
   download:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Install apkeep with cargo
         run: cargo install apkeep
@@ -15,8 +16,9 @@ jobs:
       - name: Download Minecraft Trial
         run: |
           mkdir -p apk
-          # Trialは無料なのでgoogleplayでもapkpureでもOK。失敗したらapkpureに変えてみて
-          ~/.cargo/bin/apkeep -a com.mojang.minecrafttrialpe -d apkpure apk/
+          echo "Trying apk-pure first..."
+          ~/.cargo/bin/apkeep -a com.mojang.minecrafttrialpe -d apk-pure apk/ || \
+          ~/.cargo/bin/apkeep -a com.mojang.minecrafttrialpe apk/
           ls -lh apk/
 
       - name: Upload APK/XAPK
