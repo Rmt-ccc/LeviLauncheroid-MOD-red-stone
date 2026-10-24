@@ -39,6 +39,7 @@ jobs:
             -preScript DisableHeavyAnalyzers.java \
             -postScript FindStateRefs.java \
             -postScript FindCallers.java \
+            -postScript FindChunkIndexHeuristic.java \
             -deleteProject \
             -max-cpu 2 \
             -analysisTimeoutPerFile 1500 \
@@ -51,6 +52,7 @@ jobs:
           path: |
             state_refs_output.txt
             caller_refs_output.txt
+            chunk_index_heuristic_output.txt
             analyze.log
           if-no-files-found: warn
 
@@ -122,6 +124,7 @@ jobs:
           # decision (see chat) before further Ghidra scripting.
           archive_numbered state_refs_output.txt state_refs_output Ghidra-Analysis-Data
           archive_numbered caller_refs_output.txt caller_refs_output Ghidra-Analysis-Data
+          archive_numbered chunk_index_heuristic_output.txt chunk_index_heuristic_output Ghidra-Analysis-Data
           archive_numbered signature_scan_output.txt signature_scan_output Ghidra-Analysis-Data/Failure-File
           archive_numbered blockid_refs_output.txt blockid_refs_output Ghidra-Analysis-Data/Failure-File
           archive_numbered funcptr_refs_output.txt funcptr_refs_output Ghidra-Analysis-Data/Failure-File
