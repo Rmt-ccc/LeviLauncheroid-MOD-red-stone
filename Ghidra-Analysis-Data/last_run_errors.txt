@@ -71,4 +71,4 @@ WARN  Unable to fully apply external demangled Address Table at 14a91ee8: std::d
       uStack_290._4_1_ = s_Error_0254a95c[3];
       s_Error_0254a95c._0_4_ = uVar10;
     uStack_170._0_6_ = CONCAT15(s_Error_0254a95c[4],CONCAT41(s_Error_0254a95c._0_4_,10));
-INFO  FindBlockIdRefs.java> (decompile failed for _INIT_2029) (GhidraScript)  
+ERROR Abort due to Headless analyzer error: Java heap space (HeadlessAnalyzer) java.lang.OutOfMemoryError: Java heap space
