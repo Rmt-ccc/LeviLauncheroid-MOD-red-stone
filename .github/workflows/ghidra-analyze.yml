@@ -40,7 +40,6 @@ jobs:
             -postScript FindStateRefs.java \
             -postScript FindCallers.java \
             -postScript FindChunkIndexHeuristic.java \
-            -postScript FindVtableSlot4Candidates.java \
             -deleteProject \
             -max-cpu 2 \
             -analysisTimeoutPerFile 1500 \
@@ -54,7 +53,6 @@ jobs:
             state_refs_output.txt
             caller_refs_output.txt
             chunk_index_heuristic_output.txt
-            vtable_slot4_candidates_output.txt
             analyze.log
           if-no-files-found: warn
 
@@ -106,7 +104,15 @@ jobs:
             git add "${dir}/${base}-${next}.txt"
           }
 
-          # Dead ends, newest first: signature_scan_output (BedrockTools'
+          # Dead ends, newest first: vtable_slot4_candidates_output
+          # (brute-force vtable scan for the slot-4 getBlock-equivalent
+          # accessor - stage 1 alone matched 393,367 vtable-shaped word
+          # sequences, and the stage-2 instruction-shape filter still
+          # left 92,747 candidate functions; decompiling an arbitrary
+          # capped subset of those found nothing tied to the one known
+          # call site in FUN_09053250. Too large a search space without
+          # a way to correlate candidates back to that call site - see
+          # FindCallers.java's pivot below instead), signature_scan_output (BedrockTools'
           # AOB signatures - 0 matches for BlockSourceGetBlock, and the
           # few matches on the other two signatures decompiled to
           # unrelated code = false positives; root cause: AOB signatures
@@ -121,19 +127,23 @@ jobs:
           # time). None of these run anymore - old output stays in
           # Failure-File/ for history, nothing new lands there.
           # Current active line: state_refs_output (aux-value formulas,
-          # confirmed-useful), caller_refs_output (confirmed no direct
-          # callers - informative negative), chunk_index_heuristic_output
-          # (found FUN_09053250 / BlockTypeRegistry::getDirectAccessBlocks,
+          # confirmed-useful), chunk_index_heuristic_output (found
+          # FUN_09053250 / BlockTypeRegistry::getDirectAccessBlocks,
           # confirmed the vtable+0x20 getBlock-equivalent call pattern).
-          # vtable_slot4_candidates_output is the follow-up: brute-force
-          # vtable scan + instruction-shape filter looking for that same
-          # slot-4 accessor's concrete vtable, to learn the live Block
-          # struct's stride and go looking for a redstone_signal-equivalent
-          # field next to the known +0x110 identity field.
+          # caller_refs_output's target list was repointed at
+          # FUN_09053250 itself (its original two targets - the shared
+          # BlockState-value intern helper and the redstone_signal
+          # schema-registration constructor - were both confirmed
+          # unrelated to live state reads and are retired, old results
+          # kept in the archive below for history): finding real callers
+          # of FUN_09053250 (if any exist via direct "bl", rather than
+          # itself only being reached indirectly) may show the concrete
+          # object type passed in as param_1/param_3, which is what the
+          # failed vtable brute-force above couldn't get to.
           archive_numbered state_refs_output.txt state_refs_output Ghidra-Analysis-Data
           archive_numbered caller_refs_output.txt caller_refs_output Ghidra-Analysis-Data
           archive_numbered chunk_index_heuristic_output.txt chunk_index_heuristic_output Ghidra-Analysis-Data
-          archive_numbered vtable_slot4_candidates_output.txt vtable_slot4_candidates_output Ghidra-Analysis-Data
+          archive_numbered vtable_slot4_candidates_output.txt vtable_slot4_candidates_output Ghidra-Analysis-Data/Failure-File
           archive_numbered signature_scan_output.txt signature_scan_output Ghidra-Analysis-Data/Failure-File
           archive_numbered blockid_refs_output.txt blockid_refs_output Ghidra-Analysis-Data/Failure-File
           archive_numbered funcptr_refs_output.txt funcptr_refs_output Ghidra-Analysis-Data/Failure-File

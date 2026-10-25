@@ -1,27 +1,34 @@
 // Ghidra headless post-script.
 //
-// Follow-up to FindStateRefs.java. That script found, for each
-// BlockState property name (redstone_signal, repeater_delay, ...), the
-// function(s) that construct a BlockState value object for every
-// possible aux/data value of that property (one function per property,
-// containing one switch-case per possible value - these run at world
-// load time to convert legacy block data into Bedrock's BlockState
-// system).
+// Originally a follow-up to FindStateRefs.java, targeting the shared
+// "intern/register a BlockState value" helper and the redstone_signal
+// property's own constructor function. Both were confirmed (see the
+// project notes) to be world-load-time schema registration code with
+// no path to a live, per-tick state read - a dead end, kept archived
+// rather than re-run.
 //
-// All of those constructor functions were observed calling the exact
-// same low-level helper at address TARGET_HELPER (func_0x1256e808 in
-// the earlier decompile output) to intern/register the constructed
-// state value. This script's job is to find every caller of a small,
-// curated set of addresses - primarily that shared helper, and the
-// redstone_signal constructor itself - and dump the caller functions'
-// decompiled pseudocode, so we can trace a path from "value exists"
-// toward "value can be read back for a live block at runtime" (which is
-// what the LeviLaunchroid MOD needs in order to render e.g. a redstone
-// wire's current signal strength in-world).
+// Retargeted at FUN_09053250, the function FindChunkIndexHeuristic.java
+// found: the one place in this binary where a vtable+0x20 virtual call
+// returns what's confirmed to be a live Block* (via a later identity
+// comparison at +0x110 within that returned pointer). Ghidra can't
+// resolve that one virtual call statically (no RTTI in this build), and
+// a brute-force whole-binary vtable scan for its concrete target turned
+// out to be far too broad (hundreds of thousands of shape-matching
+// candidates - see Ghidra-Analysis-Data/Failure-File/
+// vtable_slot4_candidates_output). This script instead asks a narrower,
+// cheaper question: does anything in the binary call FUN_09053250
+// itself via a direct "bl"? If so, that caller's own decompiled code
+// may reveal the concrete type of the object it constructs/passes in
+// as param_1/param_3 - the one piece of information the vtable scan
+// couldn't get to. (If this comes back empty, that's itself useful:
+// it would mean FUN_09053250 is only ever reached indirectly too, e.g.
+// via its own vtable slot as some kind of diff/sync callback, which
+// would redirect the next attempt toward finding callers of whatever
+// registers that callback instead.)
 //
-// Deliberately narrow in scope (a handful of target addresses, not a
+// Deliberately narrow in scope (a single target address, not a
 // full-binary string sweep) to keep this a bounded, fast pass that can
-// run in the same headless session as FindStateRefs.java.
+// run in the same headless session as the other scripts.
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -46,13 +53,12 @@ public class FindCallers extends GhidraScript {
 
     // Addresses to find callers of. Named for readability in the output.
     private static final long[] TARGET_ADDRS = {
-        0x1256e808L, // shared "intern/register BlockState value" helper,
-                     // called identically from every per-property
-                     // constructor function FindStateRefs.java found
-                     // (redstone_signal's, repeater_delay's, etc.)
-        0x11633944L, // redstone_signal's own constructor function
-                     // (switch over aux value 0..15) - most relevant
-                     // property for this project
+        0x09053250L, // FUN_09053250: confirmed to read a live Block*
+                     // through a vtable+0x20 virtual call whose
+                     // concrete target Ghidra can't resolve statically.
+                     // Looking for real "bl" callers of this function
+                     // itself, to find the concrete object type passed
+                     // in as param_1/param_3.
     };
 
     private static final long FUNC_PROLOGUE_MARKER_OFFSET = 0x0e656420L;
