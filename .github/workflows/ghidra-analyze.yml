@@ -40,6 +40,7 @@ jobs:
             -postScript FindStateRefs.java \
             -postScript FindCallers.java \
             -postScript FindChunkIndexHeuristic.java \
+            -postScript FindCallerPrologues.java \
             -deleteProject \
             -max-cpu 2 \
             -analysisTimeoutPerFile 1500 \
@@ -53,6 +54,7 @@ jobs:
             state_refs_output.txt
             caller_refs_output.txt
             chunk_index_heuristic_output.txt
+            caller_prologues_output.txt
             analyze.log
           if-no-files-found: warn
 
@@ -139,10 +141,21 @@ jobs:
           # of FUN_09053250 (if any exist via direct "bl", rather than
           # itself only being reached indirectly) may show the concrete
           # object type passed in as param_1/param_3, which is what the
-          # failed vtable brute-force above couldn't get to.
+          # failed vtable brute-force above couldn't get to. Confirmed:
+          # 2 direct "bl" call sites exist (0x090549bc, 0x090649dc), but
+          # neither sat inside a Function Ghidra's analyzer could bound,
+          # so only raw disassembly windows came back - both end the
+          # same way (write 1 to [x19+0x1508], then call a shared
+          # function at 0x09054f1c), suggesting closely related sibling
+          # callers. caller_prologues_output is the follow-up: walks
+          # backward from each of those 2 known call sites looking for a
+          # standard AArch64 prologue shape (stp x29,x30 frame save) to
+          # pin down each caller's real entry point and get a full
+          # decompile instead of just the window around the call.
           archive_numbered state_refs_output.txt state_refs_output Ghidra-Analysis-Data
           archive_numbered caller_refs_output.txt caller_refs_output Ghidra-Analysis-Data
           archive_numbered chunk_index_heuristic_output.txt chunk_index_heuristic_output Ghidra-Analysis-Data
+          archive_numbered caller_prologues_output.txt caller_prologues_output Ghidra-Analysis-Data
           archive_numbered vtable_slot4_candidates_output.txt vtable_slot4_candidates_output Ghidra-Analysis-Data/Failure-File
           archive_numbered signature_scan_output.txt signature_scan_output Ghidra-Analysis-Data/Failure-File
           archive_numbered blockid_refs_output.txt blockid_refs_output Ghidra-Analysis-Data/Failure-File
