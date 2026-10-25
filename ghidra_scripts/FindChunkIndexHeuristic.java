@@ -31,9 +31,10 @@
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 import ghidra.app.decompiler.DecompInterface;
@@ -77,36 +78,58 @@ public class FindChunkIndexHeuristic extends GhidraScript {
                 + " instructions by LSL-immediate #4 and LSL-immediate #8 "
                 + "(the sub-chunk local-position indexing fingerprint)...");
 
-        List<Instruction> allInsns = new ArrayList<>();
-        InstructionIterator it = currentProgram.getListing().getInstructions(true);
-        while (it.hasNext()) {
-            allInsns.add(it.next());
-        }
-        emit("Total instructions to scan: " + allInsns.size());
-        emit("");
-
+        // Single streaming pass over the instruction iterator - never
+        // materializes the full instruction list (which, on this
+        // binary's size after force-disassembly, is large enough to
+        // exhaust the default headless JVM heap; an earlier version of
+        // this script did collect it all into an ArrayList first and
+        // the run aborted with OutOfMemoryError). Each "AND #0xf" sighting
+        // opens a small pending window (bounded by WINDOW_INSNS) that is
+        // checked against every instruction seen afterward and expires on
+        // its own; memory use is bounded by the number of concurrently
+        // open windows, not by total instruction count.
         Set<Address> candidateHits = new LinkedHashSet<>();
+        Deque<PendingAnd> pending = new ArrayDeque<>();
 
-        for (int i = 0; i < allInsns.size(); i++) {
-            Instruction andInsn = allInsns.get(i);
-            if (!isAndWithImmediate(andInsn, 0xfL)) continue;
+        InstructionIterator it = currentProgram.getListing().getInstructions(true);
+        long scanned = 0;
+        while (it.hasNext()) {
+            Instruction insn = it.next();
+            scanned++;
 
-            boolean sawShift4 = false;
-            boolean sawShift8 = false;
-            int end = Math.min(i + WINDOW_INSNS, allInsns.size());
-            for (int j = i + 1; j < end; j++) {
-                Instruction cand = allInsns.get(j);
-                Long shiftAmt = lslImmediateAmount(cand);
-                if (shiftAmt == null) continue;
-                if (shiftAmt == 4L) sawShift4 = true;
-                if (shiftAmt == 8L) sawShift8 = true;
-                if (sawShift4 && sawShift8) break;
+            Long shiftAmt = lslImmediateAmount(insn);
+            if (shiftAmt != null) {
+                for (PendingAnd p : pending) {
+                    if (shiftAmt == 4L) p.sawShift4 = true;
+                    if (shiftAmt == 8L) p.sawShift8 = true;
+                }
             }
 
-            if (sawShift4 && sawShift8) {
-                candidateHits.add(andInsn.getAddress());
+            // Expire windows that have run out of lookahead room, and
+            // record any that matched both shifts before expiring.
+            Iterator<PendingAnd> pit = pending.iterator();
+            while (pit.hasNext()) {
+                PendingAnd p = pit.next();
+                p.remaining--;
+                if (p.sawShift4 && p.sawShift8) {
+                    candidateHits.add(p.andAddress);
+                    pit.remove();
+                } else if (p.remaining <= 0) {
+                    pit.remove();
+                }
+            }
+
+            if (isAndWithImmediate(insn, 0xfL)) {
+                pending.addLast(new PendingAnd(insn.getAddress(), WINDOW_INSNS));
+            }
+
+            if ((scanned & 0xFFFFFF) == 0) {
+                println("FindChunkIndexHeuristic: scanned " + scanned + " instruction(s) so far, "
+                        + candidateHits.size() + " hit(s), " + pending.size() + " window(s) open");
             }
         }
+        emit("Total instructions scanned: " + scanned);
+        emit("");
 
         emit("Raw hits (AND#0xf site): " + candidateHits.size());
         emit("");
@@ -177,6 +200,18 @@ public class FindChunkIndexHeuristic extends GhidraScript {
             if (o instanceof Scalar) return ((Scalar) o).getUnsignedValue();
         }
         return null;
+    }
+
+    private static final class PendingAnd {
+        final Address andAddress;
+        int remaining;
+        boolean sawShift4;
+        boolean sawShift8;
+
+        PendingAnd(Address andAddress, int remaining) {
+            this.andAddress = andAddress;
+            this.remaining = remaining;
+        }
     }
 
     private int disassembleAllExecutableCode() {
