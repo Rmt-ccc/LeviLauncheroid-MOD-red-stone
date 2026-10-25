@@ -1,0 +1,100 @@
+Force-disassembling all executable memory...
+Force-disassembly pass added 7714 new instruction(s).
+Building bl-call index over the whole program (one pass)...
+Index built: 190431 distinct call targets materialized in code.
+
+========== CALLERS OF: 09053250 ==========
+  2 call site(s) total
+  0 distinct caller function(s), 2 call site(s) with no resolvable enclosing function
+
+  ---- raw disassembly context around orphan call site 090549bc (no enclosing Function found; marker-based heuristic in tryForceCreateFunction() didn't match either, so dumping raw instructions here instead of dropping this call site) ----
+09054944  ldr x0,[x8, #0x200]
+09054948  cmp x0,x24
+0905494c  b.eq 0x09054990
+09054950  and w8,w20,#0xffff
+09054954  add w20,w20,#0x1
+09054958  cmp w8,#0xf
+0905495c  b.cc 0x090548bc
+09054960  and w8,w26,#0xffff
+09054964  add w26,w26,#0x1
+09054968  cmp w8,#0xf
+0905496c  ldr w8,[sp, #0xc]
+09054970  b.cc 0x090548b4
+09054974  ldr w8,[sp, #0x8]
+09054978  add w8,w8,#0x1
+0905497c  sxth w9,w8
+09054980  ldr w8,[sp, #0x4]
+09054984  cmp w9,w8
+09054988  b.le 0x090548a0
+0905498c  b 0x090549cc
+09054990  ldr x0,[x19, #0x28]
+09054994  ldr x8,[x0]
+09054998  ldr x8,[x8, #0x558]
+0905499c  blr x8
+090549a0  ldr x20,[sp, #0x18]
+090549a4  bl 0x0e6555a8
+090549a8  cmp w0,#0x2
+090549ac  b.eq 0x090549c0
+090549b0  ldr x1,[sp, #0x10]
+090549b4  mov x0,x19
+090549b8  mov x2,x20
+090549bc  bl 0x09053250  <-- call site
+090549c0  mov w8,#0x1508
+090549c4  mov w9,#0x1
+090549c8  strb w9,[x19, x8, LSL ]
+090549cc  mov x0,x19
+090549d0  bl 0x09054f1c
+090549d4  mov x0,x23
+090549d8  mov x1,x22
+090549dc  bl 0x090530cc
+090549e0  tbz w0,#0x0,0x09054adc
+090549e4  ldr x8,[x19, #0x30]
+
+  ---- end orphan call site 090549bc ----
+
+  ---- raw disassembly context around orphan call site 090649dc (no enclosing Function found; marker-based heuristic in tryForceCreateFunction() didn't match either, so dumping raw instructions here instead of dropping this call site) ----
+09064964  ldp x22,x8,[x19, #0x108]
+09064968  mov x9,#0x8ba3
+0906496c  movk x9,#0xba2e, LSL #16
+09064970  movk x9,#0xa2e8, LSL #32
+09064974  sub x8,x8,x22
+09064978  movk x9,#0x2e8b, LSL #48
+0906497c  smulh x8,x8,x9
+09064980  sxth w9,w23
+09064984  neg w10,w9
+09064988  lsr w9,w9,#0xf
+0906498c  and w10,w10,#0xfff0
+09064990  and w9,w9,w10, LSR #0x4
+09064994  asr x11,x8,#0x4
+09064998  add x8,x11,x8, LSR #0x3f
+0906499c  cmp x9,x8
+090649a0  csel x23,x9,x8,cc
+090649a4  cbz x23,0x090649e0
+090649a8  mov x21,x0
+090649ac  mov x0,x22
+090649b0  mov x1,x21
+090649b4  mov w2,wzr
+090649b8  mov w3,wzr
+090649bc  bl 0x0e655584
+090649c0  subs x23,x23,#0x1
+090649c4  add x22,x22,#0x58
+090649c8  b.ne 0x090649ac
+090649cc  b 0x090649e0
+090649d0  add x2,sp,#0x8
+090649d4  mov x0,x19
+090649d8  mov x1,x20
+090649dc  bl 0x09053250  <-- call site
+090649e0  mov w8,#0x1508
+090649e4  mov w9,#0x1
+090649e8  strb w9,[x19, x8, LSL ]
+090649ec  mov x0,x19
+090649f0  bl 0x09054f1c
+090649f4  add x2,sp,#0x8
+090649f8  mov x0,x19
+090649fc  mov x1,x20
+09064a00  bl 0x0905432c
+09064a04  add x1,sp,#0x8
+
+  ---- end orphan call site 090649dc ----
+
+
