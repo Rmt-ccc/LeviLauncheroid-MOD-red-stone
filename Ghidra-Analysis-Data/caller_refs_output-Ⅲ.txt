@@ -1,0 +1,10 @@
+Force-disassembling all executable memory...
+Force-disassembly pass added 7714 new instruction(s).
+Building bl-call index over the whole program (one pass)...
+Index built: 190431 distinct call targets materialized in code.
+
+========== CALLERS OF: 09053250 ==========
+  2 call site(s) total
+  0 distinct caller function(s)
+
+
