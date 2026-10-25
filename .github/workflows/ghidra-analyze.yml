@@ -40,6 +40,7 @@ jobs:
             -postScript FindStateRefs.java \
             -postScript FindCallers.java \
             -postScript FindChunkIndexHeuristic.java \
+            -postScript FindVtableSlot4Candidates.java \
             -deleteProject \
             -max-cpu 2 \
             -analysisTimeoutPerFile 1500 \
@@ -53,6 +54,7 @@ jobs:
             state_refs_output.txt
             caller_refs_output.txt
             chunk_index_heuristic_output.txt
+            vtable_slot4_candidates_output.txt
             analyze.log
           if-no-files-found: warn
 
@@ -120,11 +122,18 @@ jobs:
           # Failure-File/ for history, nothing new lands there.
           # Current active line: state_refs_output (aux-value formulas,
           # confirmed-useful), caller_refs_output (confirmed no direct
-          # callers - informative negative). Next step needs a user
-          # decision (see chat) before further Ghidra scripting.
+          # callers - informative negative), chunk_index_heuristic_output
+          # (found FUN_09053250 / BlockTypeRegistry::getDirectAccessBlocks,
+          # confirmed the vtable+0x20 getBlock-equivalent call pattern).
+          # vtable_slot4_candidates_output is the follow-up: brute-force
+          # vtable scan + instruction-shape filter looking for that same
+          # slot-4 accessor's concrete vtable, to learn the live Block
+          # struct's stride and go looking for a redstone_signal-equivalent
+          # field next to the known +0x110 identity field.
           archive_numbered state_refs_output.txt state_refs_output Ghidra-Analysis-Data
           archive_numbered caller_refs_output.txt caller_refs_output Ghidra-Analysis-Data
           archive_numbered chunk_index_heuristic_output.txt chunk_index_heuristic_output Ghidra-Analysis-Data
+          archive_numbered vtable_slot4_candidates_output.txt vtable_slot4_candidates_output Ghidra-Analysis-Data
           archive_numbered signature_scan_output.txt signature_scan_output Ghidra-Analysis-Data/Failure-File
           archive_numbered blockid_refs_output.txt blockid_refs_output Ghidra-Analysis-Data/Failure-File
           archive_numbered funcptr_refs_output.txt funcptr_refs_output Ghidra-Analysis-Data/Failure-File
