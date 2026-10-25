@@ -111,6 +111,7 @@ public class FindCallers extends GhidraScript {
             emit("  " + callSites.size() + " call site(s) total");
 
             Map<Function, List<Address>> byFunction = new LinkedHashMap<>();
+            List<Address> orphanCallSites = new ArrayList<>();
             for (Address from : callSites) {
                 Function fn = getFunctionContaining(from);
                 if (fn == null) {
@@ -118,10 +119,24 @@ public class FindCallers extends GhidraScript {
                 }
                 if (fn != null) {
                     byFunction.computeIfAbsent(fn, k -> new ArrayList<>()).add(from);
+                } else {
+                    orphanCallSites.add(from);
                 }
             }
-            emit("  " + byFunction.size() + " distinct caller function(s)");
+            emit("  " + byFunction.size() + " distinct caller function(s), "
+                    + orphanCallSites.size() + " call site(s) with no resolvable enclosing function");
             emit("");
+
+            for (Address from : orphanCallSites) {
+                emit("  ---- raw disassembly context around orphan call site " + from
+                        + " (no enclosing Function found; marker-based heuristic in "
+                        + "tryForceCreateFunction() didn't match either, so dumping raw "
+                        + "instructions here instead of dropping this call site) ----");
+                emit(rawDisassemblyWindow(from, 30, 10));
+                emit("  ---- end orphan call site " + from + " ----");
+                emit("");
+                out.flush();
+            }
 
             int shown = 0;
             for (Map.Entry<Function, List<Address>> e : byFunction.entrySet()) {
@@ -252,6 +267,38 @@ public class FindCallers extends GhidraScript {
         } catch (Exception ex) {
             println("clearNoReturnChain failed: " + ex.getMessage());
         }
+    }
+
+    // Fallback for a call site with no enclosing Function Ghidra (or
+    // tryForceCreateFunction's narrow heuristic) could identify: just
+    // print the raw disassembly for a window of instructions before and
+    // after the call, so the call's param-setup is still readable by
+    // hand even without a proper function boundary.
+    private String rawDisassemblyWindow(Address callSite, int beforeCount, int afterCount) {
+        StringBuilder sb = new StringBuilder();
+        List<Instruction> before = new ArrayList<>();
+        Instruction insn = currentProgram.getListing().getInstructionAt(callSite);
+        Instruction walker = insn;
+        for (int i = 0; i < beforeCount && walker != null; i++) {
+            walker = walker.getPrevious();
+            if (walker != null) before.add(walker);
+        }
+        for (int i = before.size() - 1; i >= 0; i--) {
+            Instruction ins = before.get(i);
+            sb.append(ins.getAddress()).append("  ").append(ins.toString()).append("\n");
+        }
+        if (insn != null) {
+            sb.append(insn.getAddress()).append("  ").append(insn.toString()).append("  <-- call site\n");
+            Instruction after = insn;
+            for (int i = 0; i < afterCount; i++) {
+                after = after.getNext();
+                if (after == null) break;
+                sb.append(after.getAddress()).append("  ").append(after.toString()).append("\n");
+            }
+        } else {
+            sb.append("(no instruction at ").append(callSite).append(")\n");
+        }
+        return sb.toString();
     }
 
     private Function tryForceCreateFunction(Address from, Address marker) {
