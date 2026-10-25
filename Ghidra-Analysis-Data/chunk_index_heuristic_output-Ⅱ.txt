@@ -1,0 +1,651 @@
+Force-disassembling all executable memory (closing analyzer coverage gaps)...
+Force-disassembly pass added 7714 new instruction(s).
+
+Scanning for AND #0xf followed within 48 instructions by LSL-immediate #4 and LSL-immediate #8 (the sub-chunk local-position indexing fingerprint)...
+Total instructions scanned: 56838453
+
+Raw hits (AND#0xf site): 1
+
+Distinct candidate function(s): 1
+
+========== CANDIDATE: FUN_09053250 @ 09053250 ==========
+
+void FUN_09053250(long param_1,long param_2,long *param_3)
+
+{
+  uint uVar1;
+  uint *puVar2;
+  uint uVar3;
+  long lVar4;
+  uint *puVar5;
+  short sVar6;
+  uint *puVar7;
+  ulong uVar8;
+  long *plVar9;
+  long lVar10;
+  long lVar11;
+  undefined8 uVar12;
+  undefined8 uVar13;
+  undefined8 uVar14;
+  uint uVar15;
+  uint uVar16;
+  uint *puVar17;
+  uint uVar18;
+  uint *puVar19;
+  ulong uVar20;
+  uint *puVar21;
+  ulong uVar22;
+  uint *puVar23;
+  ulong uVar24;
+  uint *puVar25;
+  int iVar26;
+  long lVar27;
+  int iVar28;
+  undefined1 *puStack_218;
+  undefined8 uStack_1f0;
+  long *plStack_1e8;
+  uint *puStack_1e0;
+  uint *puStack_1d8;
+  uint *puStack_1d0;
+  undefined8 uStack_1c8;
+  long *plStack_1c0;
+  undefined4 uStack_1b4;
+  undefined *puStack_1b0;
+  undefined8 *puStack_1a8;
+  undefined4 uStack_19c;
+  int iStack_198;
+  undefined4 uStack_194;
+  undefined *puStack_190;
+  undefined8 *puStack_188;
+  undefined8 uStack_180;
+  ushort uStack_178;
+  undefined8 uStack_168;
+  ulong uStack_160;
+  undefined8 uStack_158;
+  undefined8 uStack_150;
+  undefined1 uStack_148;
+  ulong *puStack_140;
+  ulong uStack_138;
+  undefined8 uStack_130;
+  undefined8 uStack_128;
+  undefined8 uStack_120;
+  undefined8 uStack_118;
+  undefined8 uStack_110;
+  undefined8 uStack_108;
+  undefined8 uStack_100;
+  undefined8 uStack_f8;
+  undefined8 uStack_f0;
+  undefined8 uStack_e8;
+  undefined8 uStack_e0;
+  undefined4 uStack_d8;
+  undefined8 uStack_d0;
+  undefined8 uStack_c8;
+  undefined8 uStack_c0;
+  undefined8 uStack_b8;
+  undefined8 uStack_b0;
+  undefined8 uStack_a8;
+  undefined8 uStack_a0;
+  undefined4 uStack_98;
+  undefined8 uStack_90;
+  undefined8 uStack_88;
+  undefined8 uStack_80;
+  long lStack_78;
+  
+  lVar4 = tpidr_el0;
+  lStack_78 = *(long *)(lVar4 + 0x28);
+  sVar6 = *(short *)(*(long *)(param_1 + 0x30) + 0xa8);
+  uVar3 = (uint)-(int)sVar6 >> 4 & (uint)(int)sVar6 >> 0xf & 0xff;
+  puVar17 = puStack_1d8;
+  if (uVar3 != 0) {
+    puStack_1d8 = (uint *)0x0;
+    puStack_1d0 = (uint *)0x0;
+    puStack_1e0 = (uint *)0x0;
+    puVar7 = (uint *)(**(code **)(lRam00000000148046d8 + 0x10))(0x148046d8,0x400);
+    if ((puVar7 == (uint *)0x0) &&
+       (uVar8 = func_0x0e654bd0("We failed to allocate %zu bytes.","pointer || size == 0",0x25,
+                                "D:\\a\\_work\\1\\s/src/base/Core/src/Memory/MemoryOperators.cpp",
+                                "void *operator new(size_t)",0x400), (uVar8 & 1) != 0)) {
+      func_0x0e654bd4();
+    }
+    puStack_1d0 = puVar7 + 0x100;
+    uVar15 = 0;
+    puStack_1e0 = puVar7;
+    puStack_1d8 = puVar7;
+    do {
+      iVar26 = 0;
+      puVar17 = puVar7;
+      do {
+        uVar8 = (*(long *)(param_1 + 0x110) - *(long *)(param_1 + 0x108) >> 3) * 0x2e8ba2e8ba2e8ba3;
+        if ((uVar8 < uVar3 || uVar8 - uVar3 == 0) ||
+           (plVar9 = *(long **)(*(long *)(param_1 + 0x108) + (ulong)uVar3 * 0x58 + 0x30),
+           plVar9 == (long *)0x0)) {
+          if ((plRam000000001499fe50 == (long *)0x0) &&
+             (uVar8 = func_0x0e654bd0("Tried to use the direct access blocks without initializing them."
+                                      ,"mDirectAccessBlocks",0x30c,
+                                      "D:\\a\\_work\\1\\s/handheld/src/common/world/level/block/registry/BlockTypeRegistry.cpp"
+                                      ,
+                                      "const BlockTypeRegistry::DirectAccessBlocks &BlockTypeRegistry::getDirectAccessBlocks() const"
+                                     ), (uVar8 & 1) != 0)) {
+            uRam0000000000000000 = 0xdeadc0de;
+          }
+          lVar10 = *(long *)(*plRam000000001499fe50 + 0x200);
+        }
+        else {
+          lVar10 = (**(code **)(*plVar9 + 0x20))(plVar9,uVar15 * 0x100 + iVar26 * 0x10);
+        }
+        lVar11 = func_0x0e6550b4(0x1499fd20,0x149aec28,1);
+        puVar2 = puStack_1e0;
+        puVar7 = puVar17;
+        if (*(long *)(lVar10 + 0x110) != *(long *)(lVar11 + 0x110)) {
+          if (puVar17 < puStack_1d0) {
+            puVar7 = puVar17 + 1;
+            *puVar17 = uVar3 << 0x14 | iVar26 << 8 | uVar15;
+            puStack_1d8 = puVar7;
+          }
+          else {
+            lVar10 = (long)puVar17 - (long)puStack_1e0;
+            uVar8 = (lVar10 >> 2) + 1;
+            if (uVar8 >> 0x3e != 0) {
+              if (*(long *)(lVar4 + 0x28) == lStack_78) {
+                FUN_090779c0(&puStack_1e0);
+LAB_090541e0:
+                if (*(long *)(lVar4 + 0x28) == lStack_78) {
+                  func_0x0860312c();
+                  func_0x08603160();
+                  func_0x08603160();
+                  uVar12 = func_0x08603160();
+                  goto LAB_090542ac;
+                }
+              }
+              goto LAB_090542a4;
+            }
+            uVar20 = (long)puStack_1d0 - (long)puStack_1e0 >> 1;
+            if (uVar20 <= uVar8) {
+              uVar20 = uVar8;
+            }
+            if (0x7ffffffffffffffb < (ulong)((long)puStack_1d0 - (long)puStack_1e0)) {
+              uVar20 = 0x3fffffffffffffff;
+            }
+            if (uVar20 == 0) {
+LAB_090534e8:
+              lVar11 = 0;
+            }
+            else {
+              if (uVar20 >> 0x3e != 0) goto LAB_090541e0;
+              lVar11 = (**(code **)(lRam00000000148046d8 + 0x10))(0x148046d8,uVar20 << 2);
+              if (lVar11 == 0) {
+                uVar8 = func_0x0e654bd0("We failed to allocate %zu bytes.","pointer || size == 0",
+                                        0x25,
+                                        "D:\\a\\_work\\1\\s/src/base/Core/src/Memory/MemoryOperators.cpp"
+                                        ,"void *operator new(size_t)",uVar20 << 2);
+                if ((uVar8 & 1) != 0) {
+                  func_0x0e654bd4();
+                }
+                goto LAB_090534e8;
+              }
+            }
+            puVar19 = (uint *)(lVar11 + (lVar10 >> 2) * 4);
+            puVar7 = puVar19 + 1;
+            *puVar19 = uVar3 << 0x14 | iVar26 << 8 | uVar15;
+            puVar21 = puVar19;
+            puVar25 = puVar17;
+            if ((long)puVar17 - (long)puVar2 != 0) {
+              uVar8 = ((long)puVar17 - (long)puVar2) - 4;
+              puVar25 = puStack_1e0;
+              if (0xab < uVar8) {
+                puVar21 = puVar17 + -1;
+                uVar22 = (lVar11 + lVar10) - 4;
+                uVar24 = (long)puVar21 - (long)puVar2 & 0xfffffffffffffffc;
+                if (((uVar22 - uVar24 <= uVar22) && ((uint *)((long)puVar21 - uVar24) <= puVar21))
+                   && (0x1f < (ulong)((long)puVar17 + (-lVar10 - lVar11)))) {
+                  puVar23 = puVar17 + -4;
+                  uVar8 = (uVar8 >> 2) + 1;
+                  uVar22 = uVar8 & 0x7ffffffffffffff8;
+                  puVar17 = puVar17 + -uVar22;
+                  puVar21 = puVar19 + -uVar22;
+                  puVar19 = puVar19 + -4;
+                  uVar24 = uVar22;
+                  do {
+                    puVar5 = puVar23 + -2;
+                    uVar13 = *(undefined8 *)(puVar23 + -4);
+                    uVar14 = *(undefined8 *)(puVar23 + 2);
+                    uVar12 = *(undefined8 *)puVar23;
+                    uVar24 = uVar24 - 8;
+                    puVar23 = puVar23 + -8;
+                    *(undefined8 *)(puVar19 + -2) = *(undefined8 *)puVar5;
+                    *(undefined8 *)(puVar19 + -4) = uVar13;
+                    *(undefined8 *)(puVar19 + 2) = uVar14;
+                    *(undefined8 *)puVar19 = uVar12;
+                    puVar19 = puVar19 + -8;
+                  } while (uVar24 != 0);
+                  puVar19 = puVar21;
+                  if (uVar8 == uVar22) goto LAB_09053538;
+                }
+              }
+              do {
+                puVar17 = puVar17 + -1;
+                puVar21 = puVar19 + -1;
+                *puVar21 = *puVar17;
+                puVar19 = puVar21;
+              } while (puVar17 != puVar2);
+            }
+LAB_09053538:
+            puStack_1d0 = (uint *)(lVar11 + uVar20 * 4);
+            puStack_1e0 = puVar21;
+            puStack_1d8 = puVar7;
+            if (puVar25 != (uint *)0x0) {
+              (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,puVar25);
+              puStack_1d8 = puVar7;
+            }
+          }
+        }
+        puVar2 = puStack_1e0;
+        iVar26 = iVar26 + 1;
+        puVar17 = puVar7;
+      } while (iVar26 != 0x10);
+      uVar15 = uVar15 + 1;
+    } while (uVar15 != 0x10);
+    if ((long)puVar7 - (long)puStack_1e0 == 0x400) {
+      sVar6 = (**(code **)(*param_3 + 0x110))();
+      uVar12 = func_0x0e6550b4(0x1499fd20,0x1498cdd0,1);
+      lVar10 = *(long *)(param_1 + 0x108);
+      uVar20 = (ulong)((uint)(int)sVar6 >> 0xf & (-(int)sVar6 & 0xfff0U) >> 4);
+      uVar8 = (*(long *)(param_1 + 0x110) - lVar10) / 0x58;
+      if (uVar8 <= uVar20) {
+        uVar20 = uVar8;
+      }
+      for (; puVar17 = puStack_1d8, puVar19 = puVar2, uVar20 != 0; uVar20 = uVar20 - 1) {
+        func_0x0e655584(lVar10,uVar12,0,0);
+        lVar10 = lVar10 + 0x58;
+      }
+    }
+    else {
+      uVar12 = func_0x0e6550b4(0x1499fd20,0x1498cdd0,1);
+      uVar15 = (uint)*(short *)(*(long *)(param_1 + 0x30) + 0xa8);
+      uVar15 = -uVar15 >> 4 & uVar15 >> 0xf & 0xff;
+      uVar8 = (ulong)uVar15;
+      puVar19 = puVar7;
+      if (uVar15 != 0) {
+        puStack_140 = &uStack_138;
+        uStack_160 = (ulong)puStack_140 | 1;
+        puStack_188 = &uStack_180;
+        uStack_180 = &UNK_1474ff60;
+        puStack_190 = &UNK_147500d0;
+        iStack_198 = -uVar15;
+        uStack_19c = *(undefined4 *)(param_1 + 0x50);
+        uStack_194 = *(undefined4 *)(param_1 + 0x54);
+        lVar11 = *(long *)(param_1 + 0x108);
+        uVar14 = *(undefined8 *)(param_1 + 0x110);
+        uStack_128 = 0;
+        uStack_158 = 0;
+        uStack_150 = 0;
+        uStack_148 = 0;
+        lVar10 = *(long *)(param_2 + 0x108);
+        uStack_138 = 0;
+        uStack_130 = 0;
+        uStack_178 = 0;
+        puStack_218 = (undefined1 *)(**(code **)(lRam00000000148046d8 + 0x10))(0x148046d8,1);
+        if ((puStack_218 == (undefined1 *)0x0) &&
+           (uVar20 = func_0x0e654bd0("We failed to allocate %zu bytes.","pointer || size == 0",0x25,
+                                     "D:\\a\\_work\\1\\s/src/base/Core/src/Memory/MemoryOperators.cpp"
+                                     ,"void *operator new(size_t)",1), (uVar20 & 1) != 0)) {
+          func_0x0e654bd4();
+        }
+        *puStack_218 = 1;
+        uVar20 = uVar8;
+        lVar27 = lVar11;
+        do {
+          func_0x0e655588(param_2,&puStack_190,&uStack_19c,puStack_218);
+          uVar13 = func_0x0e65558c(lVar27,lVar10);
+          uVar20 = uVar20 - 1;
+          lVar27 = lVar27 + 0x58;
+          lVar10 = lVar10 + 0x58;
+          iStack_198 = iStack_198 + 1;
+        } while (uVar20 != 0);
+        lVar10 = *(long *)(param_2 + 0xf8);
+        uVar13 = func_0x10ec7c2c(uVar13,lVar10 + 0x10);
+        uVar13 = func_0x10ec7c2c(uVar13,lVar10 + 0x28);
+        func_0x10ec7c2c(uVar13,lVar10 + 0x40);
+        uVar13 = func_0x10ec7d80(*(undefined8 *)(param_1 + 0xf8),*(undefined8 *)(param_2 + 0xf8));
+        lVar10 = *(long *)(param_2 + 0x100);
+        uVar13 = func_0x10ec7c2c(uVar13,lVar10 + 0x10);
+        uVar13 = func_0x10ec7c2c(uVar13,lVar10 + 0x28);
+        func_0x10ec7c2c(uVar13,lVar10 + 0x40);
+        func_0x10ec7d80(*(undefined8 *)(param_1 + 0x100),*(undefined8 *)(param_2 + 0x100));
+        puStack_1a8 = &uStack_180;
+        uStack_100 = uStack_100 & 0xffffffffffffff00;
+        puStack_1b0 = &UNK_14750060;
+        uStack_d8 = 0x3f800000;
+        uStack_f0 = 0;
+        uStack_f8 = 0;
+        uStack_e0 = 0;
+        uStack_e8 = 0;
+        uStack_c8 = 0;
+        uStack_d0 = 0;
+        uStack_b8 = 0;
+        uStack_c0 = 0;
+        uStack_a8 = 0;
+        uStack_b0 = 0;
+        uStack_a0 = 0;
+        uStack_98 = 0x3f800000;
+        uStack_88 = 0;
+        uStack_80 = 0;
+        uStack_90 = 0;
+        func_0x0e655590(param_1,&puStack_1b0,&uStack_100);
+        func_0x0e655594(param_1,&uStack_100,lVar11,uVar14);
+        func_0x0e655598(param_1,&uStack_100);
+        uVar14 = func_0x0e6550b4(0x1499fd20,&DAT_149ba128,1);
+        iVar26 = 0;
+        do {
+          iVar28 = 0;
+          do {
+            uVar20 = (*(long *)(param_1 + 0x110) - *(long *)(param_1 + 0x108) >> 3) *
+                     0x2e8ba2e8ba2e8ba3;
+            uStack_1b4 = CONCAT22((short)(uVar15 << 4),(short)(iVar26 + iVar28));
+            if ((uVar20 < uVar8 || uVar20 - uVar8 == 0) ||
+               (plVar9 = *(long **)(*(long *)(param_1 + 0x108) + uVar8 * 0x58 + 0x30),
+               plVar9 == (long *)0x0)) {
+              if ((plRam000000001499fe50 == (long *)0x0) &&
+                 (uVar20 = func_0x0e654bd0("Tried to use the direct access blocks without initializing them."
+                                           ,"mDirectAccessBlocks",0x30c,
+                                           "D:\\a\\_work\\1\\s/handheld/src/common/world/level/block/registry/BlockTypeRegistry.cpp"
+                                           ,
+                                           "const BlockTypeRegistry::DirectAccessBlocks &BlockTypeRegistry::getDirectAccessBlocks() const"
+                                          ), (uVar20 & 1) != 0)) {
+                uRam0000000000000000 = 0xdeadc0de;
+              }
+              lVar10 = *(long *)(*plRam000000001499fe50 + 0x200);
+            }
+            else {
+              lVar10 = (**(code **)(*plVar9 + 0x20))
+                                 (plVar9,((uint)(iVar26 + iVar28) >> 4 & 0xff0) + iVar26 * 0x100);
+            }
+            lVar11 = func_0x0e6550b4(0x1499fd20,0x149aec28,1);
+            if (lVar10 == lVar11) {
+              uStack_1c8 = 0;
+              plStack_1c0 = (long *)0x0;
+              uStack_118 = 0;
+              uStack_120 = 0;
+              uStack_108 = 0;
+              uStack_110 = 0;
+              func_0x0e65559c(param_1,&uStack_1b4,uVar14,0,&uStack_1c8,&uStack_120);
+              plVar9 = plStack_1c0;
+              if ((plStack_1c0 != (long *)0x0) &&
+                 (lVar10 = func_0x085f3ca0(0xffffffffffffffff,plStack_1c0 + 1), lVar10 == 0)) {
+                (**(code **)(*plVar9 + 0x10))(plVar9);
+                func_0x0e632710(plVar9);
+              }
+            }
+            uVar1 = (uStack_1b4 >> 0x10) + 1;
+            uVar24 = (*(long *)(param_1 + 0x110) - *(long *)(param_1 + 0x108) >> 3) *
+                     0x2e8ba2e8ba2e8ba3;
+            uVar16 = uStack_1b4 & 0xff;
+            uVar20 = (long)((ulong)(uint)(int)(short)uVar1 << 0x20) >> 0x24;
+            uVar18 = uStack_1b4 >> 8 & 0xff;
+            uStack_1b4 = uVar16 | uVar1 * 0x10000 | uVar18 << 8;
+            if ((uVar24 < uVar20 || uVar24 - uVar20 == 0) ||
+               (plVar9 = *(long **)(*(long *)(param_1 + 0x108) +
+                                    (long)((int)(short)uVar1 >> 4) * 0x58 + 0x30),
+               plVar9 == (long *)0x0)) {
+              if ((plRam000000001499fe50 == (long *)0x0) &&
+                 (uVar20 = func_0x0e654bd0("Tried to use the direct access blocks without initializing them."
+                                           ,"mDirectAccessBlocks",0x30c,
+                                           "D:\\a\\_work\\1\\s/handheld/src/common/world/level/block/registry/BlockTypeRegistry.cpp"
+                                           ,
+                                           "const BlockTypeRegistry::DirectAccessBlocks &BlockTypeRegistry::getDirectAccessBlocks() const"
+                                          ), (uVar20 & 1) != 0)) {
+                uRam0000000000000000 = 0xdeadc0de;
+              }
+              lVar10 = *(long *)(*plRam000000001499fe50 + 0x200);
+            }
+            else {
+              lVar10 = (**(code **)(*plVar9 + 0x20))
+                                 (plVar9,(uVar1 & 0xf | uVar16 << 8) + uVar18 * 0x10);
+            }
+            lVar11 = func_0x0e6550b4(0x1499fd20,0x149aec28,1);
+            if (lVar10 == lVar11) {
+              uStack_1c8 = 0;
+              plStack_1c0 = (long *)0x0;
+              uStack_118 = 0;
+              uStack_120 = 0;
+              uStack_108 = 0;
+              uStack_110 = 0;
+              func_0x0e65559c(param_1,&uStack_1b4,uVar14,0,&uStack_1c8,&uStack_120);
+              plVar9 = plStack_1c0;
+              if ((plStack_1c0 != (long *)0x0) &&
+                 (lVar10 = func_0x085f3ca0(0xffffffffffffffff,plStack_1c0 + 1), lVar10 == 0)) {
+                (**(code **)(*plVar9 + 0x10))(plVar9);
+                func_0x0e632710(plVar9);
+              }
+            }
+            uVar1 = (uStack_1b4 >> 0x10) + 1;
+            uVar24 = (*(long *)(param_1 + 0x110) - *(long *)(param_1 + 0x108) >> 3) *
+                     0x2e8ba2e8ba2e8ba3;
+            uVar16 = uStack_1b4 & 0xff;
+            uVar20 = (long)((ulong)(uint)(int)(short)uVar1 << 0x20) >> 0x24;
+            uVar18 = uStack_1b4 >> 8 & 0xff;
+            uStack_1b4 = uVar16 | uVar1 * 0x10000 | uVar18 << 8;
+            if ((uVar24 < uVar20 || uVar24 - uVar20 == 0) ||
+               (plVar9 = *(long **)(*(long *)(param_1 + 0x108) +
+                                    (long)((int)(short)uVar1 >> 4) * 0x58 + 0x30),
+               plVar9 == (long *)0x0)) {
+              if ((plRam000000001499fe50 == (long *)0x0) &&
+                 (uVar20 = func_0x0e654bd0("Tried to use the direct access blocks without initializing them."
+                                           ,"mDirectAccessBlocks",0x30c,
+                                           "D:\\a\\_work\\1\\s/handheld/src/common/world/level/block/registry/BlockTypeRegistry.cpp"
+                                           ,
+                                           "const BlockTypeRegistry::DirectAccessBlocks &BlockTypeRegistry::getDirectAccessBlocks() const"
+                                          ), (uVar20 & 1) != 0)) {
+                uRam0000000000000000 = 0xdeadc0de;
+              }
+              lVar10 = *(long *)(*plRam000000001499fe50 + 0x200);
+            }
+            else {
+              lVar10 = (**(code **)(*plVar9 + 0x20))
+                                 (plVar9,(uVar1 & 0xf | uVar16 << 8) + uVar18 * 0x10);
+            }
+            lVar11 = func_0x0e6550b4(0x1499fd20,0x149aec28,1);
+            if (lVar10 == lVar11) {
+              uStack_1c8 = 0;
+              plStack_1c0 = (long *)0x0;
+              uStack_118 = 0;
+              uStack_120 = 0;
+              uStack_108 = 0;
+              uStack_110 = 0;
+              func_0x0e65559c(param_1,&uStack_1b4,uVar14,0,&uStack_1c8,&uStack_120);
+              plVar9 = plStack_1c0;
+              if ((plStack_1c0 != (long *)0x0) &&
+                 (lVar10 = func_0x085f3ca0(0xffffffffffffffff,plStack_1c0 + 1), lVar10 == 0)) {
+                (**(code **)(*plVar9 + 0x10))(plVar9);
+                func_0x0e632710(plVar9);
+              }
+            }
+            uVar1 = (uStack_1b4 >> 0x10) + 1;
+            uVar24 = (*(long *)(param_1 + 0x110) - *(long *)(param_1 + 0x108) >> 3) *
+                     0x2e8ba2e8ba2e8ba3;
+            uVar16 = uStack_1b4 & 0xff;
+            uVar20 = (long)((ulong)(uint)(int)(short)uVar1 << 0x20) >> 0x24;
+            uVar18 = uStack_1b4 >> 8 & 0xff;
+            uStack_1b4 = uVar16 | uVar1 * 0x10000 | uVar18 << 8;
+            if ((uVar24 < uVar20 || uVar24 - uVar20 == 0) ||
+               (plVar9 = *(long **)(*(long *)(param_1 + 0x108) +
+                                    (long)((int)(short)uVar1 >> 4) * 0x58 + 0x30),
+               plVar9 == (long *)0x0)) {
+              if ((plRam000000001499fe50 == (long *)0x0) &&
+                 (uVar20 = func_0x0e654bd0("Tried to use the direct access blocks without initializing them."
+                                           ,"mDirectAccessBlocks",0x30c,
+                                           "D:\\a\\_work\\1\\s/handheld/src/common/world/level/block/registry/BlockTypeRegistry.cpp"
+                                           ,
+                                           "const BlockTypeRegistry::DirectAccessBlocks &BlockTypeRegistry::getDirectAccessBlocks() const"
+                                          ), (uVar20 & 1) != 0)) {
+                uRam0000000000000000 = 0xdeadc0de;
+              }
+              lVar10 = *(long *)(*plRam000000001499fe50 + 0x200);
+            }
+            else {
+              lVar10 = (**(code **)(*plVar9 + 0x20))
+                                 (plVar9,(uVar1 & 0xf | uVar16 << 8) + uVar18 * 0x10);
+            }
+            lVar11 = func_0x0e6550b4(0x1499fd20,0x149aec28,1);
+            if (lVar10 == lVar11) {
+              uStack_1c8 = 0;
+              plStack_1c0 = (long *)0x0;
+              uStack_118 = 0;
+              uStack_120 = 0;
+              uStack_108 = 0;
+              uStack_110 = 0;
+              func_0x0e65559c(param_1,&uStack_1b4,uVar14,0,&uStack_1c8,&uStack_120);
+              plVar9 = plStack_1c0;
+              if ((plStack_1c0 != (long *)0x0) &&
+                 (lVar10 = func_0x085f3ca0(0xffffffffffffffff,plStack_1c0 + 1), lVar10 == 0)) {
+                (**(code **)(*plVar9 + 0x10))(plVar9);
+                func_0x0e632710(plVar9);
+              }
+            }
+            uVar1 = (uStack_1b4 >> 0x10) + 1;
+            uVar24 = (*(long *)(param_1 + 0x110) - *(long *)(param_1 + 0x108) >> 3) *
+                     0x2e8ba2e8ba2e8ba3;
+            uVar16 = uStack_1b4 & 0xff;
+            uVar20 = (long)((ulong)(uint)(int)(short)uVar1 << 0x20) >> 0x24;
+            uVar18 = uStack_1b4 >> 8 & 0xff;
+            uStack_1b4 = uVar16 | uVar1 * 0x10000 | uVar18 << 8;
+            if ((uVar24 < uVar20 || uVar24 - uVar20 == 0) ||
+               (plVar9 = *(long **)(*(long *)(param_1 + 0x108) +
+                                    (long)((int)(short)uVar1 >> 4) * 0x58 + 0x30),
+               plVar9 == (long *)0x0)) {
+              if ((plRam000000001499fe50 == (long *)0x0) &&
+                 (uVar20 = func_0x0e654bd0("Tried to use the direct access blocks without initializing them."
+                                           ,"mDirectAccessBlocks",0x30c,
+                                           "D:\\a\\_work\\1\\s/handheld/src/common/world/level/block/registry/BlockTypeRegistry.cpp"
+                                           ,
+                                           "const BlockTypeRegistry::DirectAccessBlocks &BlockTypeRegistry::getDirectAccessBlocks() const"
+                                          ), (uVar20 & 1) != 0)) {
+                uRam0000000000000000 = 0xdeadc0de;
+              }
+              lVar10 = *(long *)(*plRam000000001499fe50 + 0x200);
+            }
+            else {
+              lVar10 = (**(code **)(*plVar9 + 0x20))
+                                 (plVar9,(uVar1 & 0xf | uVar16 << 8) + uVar18 * 0x10);
+            }
+            lVar11 = func_0x0e6550b4(0x1499fd20,0x149aec28,1);
+            if (lVar10 == lVar11) {
+              uStack_1c8 = 0;
+              plStack_1c0 = (long *)0x0;
+              uStack_118 = 0;
+              uStack_120 = 0;
+              uStack_108 = 0;
+              uStack_110 = 0;
+              func_0x0e65559c(param_1,&uStack_1b4,uVar14,0,&uStack_1c8,&uStack_120);
+              plVar9 = plStack_1c0;
+              if ((plStack_1c0 != (long *)0x0) &&
+                 (lVar10 = func_0x085f3ca0(0xffffffffffffffff,plStack_1c0 + 1), lVar10 == 0)) {
+                (**(code **)(*plVar9 + 0x10))(plVar9);
+                func_0x0e632710(plVar9);
+              }
+            }
+            uVar1 = (uStack_1b4 >> 0x10) + 1;
+            uVar24 = (*(long *)(param_1 + 0x110) - *(long *)(param_1 + 0x108) >> 3) *
+                     0x2e8ba2e8ba2e8ba3;
+            uVar16 = uStack_1b4 & 0xff;
+            uVar20 = (long)((ulong)(uint)(int)(short)uVar1 << 0x20) >> 0x24;
+            uVar18 = uStack_1b4 >> 8 & 0xff;
+            uStack_1b4 = uVar16 | uVar1 * 0x10000 | uVar18 << 8;
+            if ((uVar24 < uVar20 || uVar24 - uVar20 == 0) ||
+               (plVar9 = *(long **)(*(long *)(param_1 + 0x108) +
+                                    (long)((int)(short)uVar1 >> 4) * 0x58 + 0x30),
+               plVar9 == (long *)0x0)) {
+              if ((plRam000000001499fe50 == (long *)0x0) &&
+                 (uVar20 = func_0x0e654bd0("Tried to use the direct access blocks without initializing them."
+                                           ,"mDirectAccessBlocks",0x30c,
+                                           "D:\\a\\_work\\1\\s/handheld/src/common/world/level/block/registry/BlockTypeRegistry.cpp"
+                                           ,
+                                           "const BlockTypeRegistry::DirectAccessBlocks &BlockTypeRegistry::getDirectAccessBlocks() const"
+                                          ), (uVar20 & 1) != 0)) {
+                uRam0000000000000000 = 0xdeadc0de;
+              }
+            }
+            else {
+              (**(code **)(*plVar9 + 0x20))(plVar9,(uVar1 & 0xf | uVar16 << 8) + uVar18 * 0x10);
+            }
+            iVar28 = iVar28 + 0x100;
+          } while (iVar28 != 0x1000);
+          iVar26 = iVar26 + 1;
+        } while (iVar26 != 0x10);
+        FUN_090550c8(&uStack_100);
+        (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,puStack_218);
+        uStack_180 = &UNK_147511d8;
+        if ((uStack_178 & 1) != 0) {
+          (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,uStack_168);
+        }
+        if ((uStack_138 & 1) != 0) {
+          (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,uStack_128);
+        }
+      }
+      for (; puVar17 = puStack_1d8, puVar2 != puVar7; puVar2 = puVar2 + 1) {
+        uVar15 = 0;
+        uStack_180._4_4_ = (undefined4)((ulong)uStack_180 >> 0x20);
+        uStack_180 = (undefined *)CONCAT44(uStack_180._4_4_,(uint)(ushort)*puVar2);
+        do {
+          func_0x0e6555a0(param_1,&uStack_180,uVar12,0);
+          uStack_1f0 = 0;
+          plStack_1e8 = (long *)0x0;
+          uStack_f8 = 0;
+          uStack_100 = 0;
+          uStack_e8 = 0;
+          uStack_f0 = 0;
+          func_0x0e65559c(param_1,&uStack_180,uVar12,0,&uStack_1f0,&uStack_100);
+          plVar9 = plStack_1e8;
+          if ((plStack_1e8 != (long *)0x0) &&
+             (lVar10 = func_0x085f3ca0(0xffffffffffffffff,plStack_1e8 + 1), lVar10 == 0)) {
+            (**(code **)(*plVar9 + 0x10))(plVar9);
+            func_0x0e632710(plVar9);
+          }
+          uStack_f8 = CONCAT44(uStack_f8._4_4_,
+                               (uint)uStack_180._1_1_ + *(int *)(param_1 + 0x54) * 0x10);
+          uStack_100 = CONCAT44((int)uStack_180._2_2_ + (int)sVar6,
+                                (uint)(byte)uStack_180 + *(int *)(param_1 + 0x50) * 0x10);
+          func_0x10eb82e4(param_3,&uStack_100);
+          uVar15 = uVar15 + 1;
+          uStack_180 = (undefined *)CONCAT44(uStack_180._4_4_,(int)uStack_180 + 0x10000);
+        } while ((uVar15 & 0xffff) < uVar3 << 4);
+        puVar19 = puStack_1e0;
+      }
+    }
+    puStack_1d8 = puVar19;
+    if (puStack_1d8 != (uint *)0x0) {
+      (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,puStack_1d8);
+      puVar17 = puStack_1d8;
+    }
+  }
+  puStack_1d8 = puVar17;
+  if (*(long *)(lVar4 + 0x28) == lStack_78) {
+    return;
+  }
+LAB_090542a4:
+  do {
+    func_0x0e629a70();
+    uVar12 = func_0x08603160();
+LAB_090542ac:
+    FUN_090550c8(&uStack_100);
+    (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,puStack_218);
+    uStack_180 = &UNK_147511d8;
+    if ((uStack_178 & 1) != 0) {
+      (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,uStack_168);
+    }
+    if ((uStack_138 & 1) != 0) {
+      (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,uStack_128);
+    }
+    if (puStack_1e0 != (uint *)0x0) {
+      puStack_1d8 = puStack_1e0;
+      (**(code **)(lRam00000000148046d8 + 0x18))();
+    }
+    if (*(long *)(lVar4 + 0x28) == lStack_78) {
+      func_0x085f3e94(uVar12);
+    }
+  } while( true );
+}
+
+
+========== end FUN_09053250 ==========
+
