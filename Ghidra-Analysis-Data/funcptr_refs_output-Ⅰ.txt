@@ -1,0 +1,11 @@
+Force-disassembling all executable memory (closing analyzer coverage gaps)...
+Force-disassembly pass added 7714 new instruction(s).
+Building adrp+add/ldr/str reference index over the whole program (one pass)...
+Index built: 604094 distinct target addresses materialized in code.
+
+========== FUNCTION ADDRESS: 09053250 ==========
+  -- raw 8-byte little-endian occurrences of this address as DATA --
+    (not found as a raw 8-byte pointer value in any initialized memory block either)
+
+  (no adrp+add/ldr/str materialization of this address found in code)
+
