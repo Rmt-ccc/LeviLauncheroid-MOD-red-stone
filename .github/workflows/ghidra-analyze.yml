@@ -38,9 +38,7 @@ jobs:
             -scriptPath "$GITHUB_WORKSPACE/ghidra_scripts" \
             -preScript DisableHeavyAnalyzers.java \
             -postScript FindStateRefs.java \
-            -postScript FindCallers.java \
-            -postScript FindChunkIndexHeuristic.java \
-            -postScript FindCallerPrologues.java \
+            -postScript FindFunctionPointerRefs.java \
             -deleteProject \
             -max-cpu 2 \
             -analysisTimeoutPerFile 1500 \
@@ -52,9 +50,7 @@ jobs:
           name: ghidra-results
           path: |
             state_refs_output.txt
-            caller_refs_output.txt
-            chunk_index_heuristic_output.txt
-            caller_prologues_output.txt
+            funcptr_refs_output.txt
             analyze.log
           if-no-files-found: warn
 
@@ -108,58 +104,39 @@ jobs:
 
           # Dead ends, newest first: vtable_slot4_candidates_output
           # (brute-force vtable scan for the slot-4 getBlock-equivalent
-          # accessor - stage 1 alone matched 393,367 vtable-shaped word
-          # sequences, and the stage-2 instruction-shape filter still
-          # left 92,747 candidate functions; decompiling an arbitrary
-          # capped subset of those found nothing tied to the one known
-          # call site in FUN_09053250. Too large a search space without
-          # a way to correlate candidates back to that call site - see
-          # FindCallers.java's pivot below instead), signature_scan_output (BedrockTools'
-          # AOB signatures - 0 matches for BlockSourceGetBlock, and the
-          # few matches on the other two signatures decompiled to
-          # unrelated code = false positives; root cause: AOB signatures
-          # are tied to one specific Minecraft build, and this repo's
-          # libminecraftpe.so is a Trial-xapk build whose embedded
-          # format_version gates run up to 1.21.120, almost certainly
-          # newer than whatever build BedrockTools' current signatures
-          # were derived from), blockid_refs_output/funcptr_refs_output/
+          # accessor - too large a search space, see that script's own
+          # header), signature_scan_output (BedrockTools' AOB signatures
+          # - build mismatch, 0 useful matches), old blockid_refs_output/
           # relocation_scan_output/class-RTTI scripts (string/name-based
-          # search can't reach runtime tick/simulation code at all, since
-          # the engine resolves every name to a numeric ID once at load
-          # time). None of these run anymore - old output stays in
-          # Failure-File/ for history, nothing new lands there.
+          # search can't reach runtime tick/simulation code at all).
+          # caller_refs_output and chunk_index_heuristic_output/
+          # caller_prologues_output concluded their investigative thread
+          # (FUN_09053250 confirmed to have only 2 direct "bl" callers,
+          # both decompiled - see Ghidra-Analysis-Data/caller_prologues_
+          # output and the project notes) and no longer run every time,
+          # but their results stay archived (not moved to Failure-File -
+          # they're confirmed-useful findings, just not actively re-run).
           # Current active line: state_refs_output (aux-value formulas,
-          # confirmed-useful), chunk_index_heuristic_output (found
-          # FUN_09053250 / BlockTypeRegistry::getDirectAccessBlocks,
-          # confirmed the vtable+0x20 getBlock-equivalent call pattern).
-          # caller_refs_output's target list was repointed at
-          # FUN_09053250 itself (its original two targets - the shared
-          # BlockState-value intern helper and the redstone_signal
-          # schema-registration constructor - were both confirmed
-          # unrelated to live state reads and are retired, old results
-          # kept in the archive below for history): finding real callers
-          # of FUN_09053250 (if any exist via direct "bl", rather than
-          # itself only being reached indirectly) may show the concrete
-          # object type passed in as param_1/param_3, which is what the
-          # failed vtable brute-force above couldn't get to. Confirmed:
-          # 2 direct "bl" call sites exist (0x090549bc, 0x090649dc), but
-          # neither sat inside a Function Ghidra's analyzer could bound,
-          # so only raw disassembly windows came back - both end the
-          # same way (write 1 to [x19+0x1508], then call a shared
-          # function at 0x09054f1c), suggesting closely related sibling
-          # callers. caller_prologues_output is the follow-up: walks
-          # backward from each of those 2 known call sites looking for a
-          # standard AArch64 prologue shape (stp x29,x30 frame save) to
-          # pin down each caller's real entry point and get a full
-          # decompile instead of just the window around the call.
+          # confirmed-useful). funcptr_refs_output is now retargeted at
+          # FUN_09053250 itself (previously targeted the already-dead-end
+          # FUN_11633944 redstone_signal constructor, old results for
+          # that target kept in Failure-File below): since FUN_09053250
+          # has only 2 known direct "bl" callers and neither looks like a
+          # per-tick hook, this checks whether its address is ALSO
+          # materialized as DATA somewhere (a function-pointer table row,
+          # lambda/std::function capture, callback slot) and invoked
+          # indirectly - a path a plain "bl" scan can't see, and one
+          # Ghidra's own auto-XREFs won't catch either since
+          # DisableHeavyAnalyzers.java keeps the reference/constant-
+          # propagation analyzers off for this binary.
           archive_numbered state_refs_output.txt state_refs_output Ghidra-Analysis-Data
+          archive_numbered funcptr_refs_output.txt funcptr_refs_output Ghidra-Analysis-Data
           archive_numbered caller_refs_output.txt caller_refs_output Ghidra-Analysis-Data
           archive_numbered chunk_index_heuristic_output.txt chunk_index_heuristic_output Ghidra-Analysis-Data
           archive_numbered caller_prologues_output.txt caller_prologues_output Ghidra-Analysis-Data
           archive_numbered vtable_slot4_candidates_output.txt vtable_slot4_candidates_output Ghidra-Analysis-Data/Failure-File
           archive_numbered signature_scan_output.txt signature_scan_output Ghidra-Analysis-Data/Failure-File
           archive_numbered blockid_refs_output.txt blockid_refs_output Ghidra-Analysis-Data/Failure-File
-          archive_numbered funcptr_refs_output.txt funcptr_refs_output Ghidra-Analysis-Data/Failure-File
           archive_numbered relocation_scan_output.txt relocation_scan_output Ghidra-Analysis-Data/Failure-File
 
           # Short, always-overwritten diagnostic: just the error/exception/

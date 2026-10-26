@@ -1,34 +1,45 @@
 // Ghidra headless post-script.
 //
-// Follow-up to FindStateRefs.java and FindCallers.java.
+// Retargeted at FUN_09053250 (previously targeted FUN_11633944, the
+// redstone_signal world-load constructor - confirmed a dead end back in
+// attempts 6-8, kept archived rather than re-run; this file's scanning
+// technique is unchanged, only TARGETS below and this header differ).
 //
-// FindStateRefs.java found FUN_11633944 @ 11633944: the function that
-// builds a redstone_signal BlockState value for each possible aux/data
-// value (0..15), via switch(*extraout_x1). FindCallers.java then
-// searched for direct "bl 11633944" call sites and found none - so this
-// constructor is never called directly from code. That means its
-// address must be materialized as a DATA value somewhere (most likely
-// one field of a per-property descriptor row in a table, alongside the
-// "redstone_signal" string pointer FindStateRefs.java already located
-// at 022f76cb) and invoked indirectly through a function pointer.
+// Background: FindCallers.java confirmed FUN_09053250 (the function
+// containing the one known vtable+0x20 "DirectAccessBlocks -> live
+// Block*" call pattern) has exactly 2 direct "bl" callers in the whole
+// binary (FUN_09054334, FUN_090647b8 - both large block/world-diffing
+// routines, decompiled in Ghidra-Analysis-Data/caller_prologues_output).
+// Both known callers happen only on low-frequency paths (structure
+// placement / world-gen style code), not anything resembling a per-tick
+// render/state-read hook - raising the question of whether FUN_09053250
+// is ALSO reached some other way, one a plain "bl" scan can't see: its
+// address stored as DATA (a function-pointer table row, a lambda/
+// std::function capture, a C-style callback slot) and invoked through
+// an indirect call elsewhere. DisableHeavyAnalyzers.java deliberately
+// keeps Ghidra's own reference/constant-propagation analyzers off (see
+// that script's comments - they were the actual runtime bottleneck on
+// this binary), so Ghidra's ordinary auto-XREFs would NOT have caught
+// an adrp+add style materialization of this address either - only an
+// explicit scan like this one will.
 //
 // This script finds every place in the binary that MATERIALIZES the
-// raw address 0x11633944 as a value - via the same adrp+add/ldr/str
+// raw address 0x09053250 as a value - via the same adrp+add/ldr/str
 // reference-index technique FindStateRefs.java used for the string
 // address - rather than searching for a direct branch-link to it. Each
 // hit is a candidate site that writes this function pointer into a
-// descriptor table (likely inside some static-initializer function),
-// which is the thread to pull on to find:
-//   (a) the table's row layout (what sits next to the function pointer
-//       - the "redstone_signal" string pointer should be nearby), and
-//   (b) what *extraout_x1* in FUN_11633944 actually is - i.e. which
-//       field, at which offset from a live Block/BlockState pointer,
-//       holds the raw aux/data value the switch reads. That offset is
-//       the actual deliverable: it is what the LeviLaunchroid MOD needs
-//       to read a block's current redstone_signal (and the same
-//       pattern should generalize to composter_fill_level,
-//       sculk_sensor_phase, lever_direction - the other "aux value
-//       passed straight through, no bit math" properties).
+// table/struct/callback slot, which is the thread to pull on to find
+// what object FUN_09053250 is actually registered against (e.g. "this
+// is the per-tick world-diff callback for X subsystem") - the user
+// chose to keep digging on this thread rather than pause here, so this
+// is the next probe past the "only 2 obscure bl callers" dead end.
+//
+// The REDSTONE_SIGNAL_STRING_ADDR proximity check below is a leftover
+// from the original FUN_11633944 run (checks whether that specific
+// string's address sits near a hit) - almost certainly irrelevant for
+// FUN_09053250 (a generic block-diff utility, not property-specific),
+// but harmless to leave running: if it ever does fire, that would itself
+// be a notable (if unexpected) finding worth following up on.
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -55,7 +66,7 @@ import ghidra.util.task.ConsoleTaskMonitor;
 public class FindFunctionPointerRefs extends GhidraScript {
 
     private static final long[] TARGETS = {
-        0x11633944L,
+        0x09053250L,
     };
 
     // Address of the "redstone_signal" string's own data, as found by
