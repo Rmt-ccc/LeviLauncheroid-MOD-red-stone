@@ -38,7 +38,7 @@ jobs:
             -scriptPath "$GITHUB_WORKSPACE/ghidra_scripts" \
             -preScript DisableHeavyAnalyzers.java \
             -postScript FindStateRefs.java \
-            -postScript FindFunctionPointerRefs.java \
+            -postScript FindConstructedVtables.java \
             -deleteProject \
             -max-cpu 2 \
             -analysisTimeoutPerFile 1500 \
@@ -50,7 +50,7 @@ jobs:
           name: ghidra-results
           path: |
             state_refs_output.txt
-            funcptr_refs_output.txt
+            constructed_vtables_output.txt
             analyze.log
           if-no-files-found: warn
 
@@ -116,20 +116,26 @@ jobs:
           # output and the project notes) and no longer run every time,
           # but their results stay archived (not moved to Failure-File -
           # they're confirmed-useful findings, just not actively re-run).
+          # funcptr_refs_output (FUN_09053250 retargeted search, same as
+          # caller_refs_output above): confirmed ZERO indirect references
+          # anywhere in the binary (no adrp+add materialization, no raw
+          # 8-byte pointer occurrence either) - combined with
+          # caller_refs_output's "only 2 direct bl callers", this closes
+          # out the FUN_09053250 thread completely: there is nothing
+          # further to find about that specific function. Archived, not
+          # re-run.
           # Current active line: state_refs_output (aux-value formulas,
-          # confirmed-useful). funcptr_refs_output is now retargeted at
-          # FUN_09053250 itself (previously targeted the already-dead-end
-          # FUN_11633944 redstone_signal constructor, old results for
-          # that target kept in Failure-File below): since FUN_09053250
-          # has only 2 known direct "bl" callers and neither looks like a
-          # per-tick hook, this checks whether its address is ALSO
-          # materialized as DATA somewhere (a function-pointer table row,
-          # lambda/std::function capture, callback slot) and invoked
-          # indirectly - a path a plain "bl" scan can't see, and one
-          # Ghidra's own auto-XREFs won't catch either since
-          # DisableHeavyAnalyzers.java keeps the reference/constant-
-          # propagation analyzers off for this binary.
+          # confirmed-useful). constructed_vtables_output is the next
+          # thread (user's choice: go back to the vtable brute-force
+          # idea, now narrowed): same two-stage shape filter as the
+          # failed vtable_slot4_candidates_output attempt below, plus a
+          # new third stage reusing funcptr_refs_output's adrp+add
+          # materialization-index technique - keeping only vtable
+          # candidates a real constructor actually builds and stores
+          # into an object (the genuine-vtable signal the old attempt
+          # lacked, which is what made it too broad to use).
           archive_numbered state_refs_output.txt state_refs_output Ghidra-Analysis-Data
+          archive_numbered constructed_vtables_output.txt constructed_vtables_output Ghidra-Analysis-Data
           archive_numbered funcptr_refs_output.txt funcptr_refs_output Ghidra-Analysis-Data
           archive_numbered caller_refs_output.txt caller_refs_output Ghidra-Analysis-Data
           archive_numbered chunk_index_heuristic_output.txt chunk_index_heuristic_output Ghidra-Analysis-Data
