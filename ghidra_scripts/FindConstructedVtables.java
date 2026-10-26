@@ -158,20 +158,80 @@ public class FindConstructedVtables extends GhidraScript {
                 + "nearby - strong real-vtable signal): " + constructedVtables.size());
         emit("");
 
+        // Resolve every constructed candidate's constructor-function entry
+        // point first (cheap - no decompiling), so stage 4 below can
+        // filter on it before any decompiling happens at all. This also
+        // fixes the previous run's blind spot: with potentially thousands
+        // of real constructed vtables (this binary has many legitimate
+        // C++ classes), decompiling in plain iteration order and
+        // stopping after MAX_DECOMPILED_OUTPUT only ever showed an
+        // arbitrary early slice - never a representative sample, and
+        // never anything explicitly tied back to the one region of the
+        // binary we actually care about.
+        Map<Address, Address> ctorEntryOf = new HashMap<>();
+        for (Address vtAddr : constructedVtables) {
+            Address constructorSite = constructorSiteOf.get(vtAddr);
+            Function ctorFn = getFunctionContaining(constructorSite);
+            Address entry;
+            if (ctorFn != null) {
+                entry = ctorFn.getEntryPoint();
+            } else {
+                entry = findContainingPrologue(listing, constructorSite);
+            }
+            ctorEntryOf.put(vtAddr, entry);
+        }
+
+        emit("Stage 4: cheap summary of ALL " + constructedVtables.size()
+                + " constructed-vtable candidate(s) - vtable address, slot-4 target, "
+                + "constructor entry point - no decompiling yet, so nothing here is capped:");
+        for (Address vtAddr : constructedVtables) {
+            Address slot4Target = readPointer(mem, vtAddr.add(SLOT4_OFFSET));
+            emit("  vtable " + vtAddr + "  slot4 " + slot4Target
+                    + "  ctor_entry " + ctorEntryOf.get(vtAddr));
+        }
+        emit("");
+
+        // Locality filter: FUN_09053250 (the function with the one
+        // confirmed vtable+0x20 getBlock-equivalent call) and both of
+        // its known callers (FUN_09054334, FUN_090647b8) all sit within
+        // 0x09050000-0x09070000 - almost certainly the same translation
+        // unit / object file as whatever class this vtable belongs to,
+        // since AArch64/Android NDK builds keep one .o's functions
+        // contiguous in .text. Candidates whose CONSTRUCTOR also falls
+        // in that neighborhood are far likelier to be the right class
+        // than the thousands of unrelated constructed vtables elsewhere
+        // in this huge engine binary - only these get decompiled.
+        final long localityStart = 0x09000000L;
+        final long localityEnd = 0x09100000L;
+        List<Address> localityMatches = new ArrayList<>();
+        for (Address vtAddr : constructedVtables) {
+            Address entry = ctorEntryOf.get(vtAddr);
+            if (entry == null) continue;
+            long off = entry.getOffset();
+            if (off >= localityStart && off < localityEnd) {
+                localityMatches.add(vtAddr);
+            }
+        }
+        emit("Stage 4 locality filter: constructor entry point within ["
+                + toAddr(localityStart) + ", " + toAddr(localityEnd)
+                + ") - the same neighborhood as FUN_09053250 and its 2 known callers. "
+                + "Survivors: " + localityMatches.size() + " of " + constructedVtables.size());
+        emit("");
+
         DecompInterface decomp = new DecompInterface();
         decomp.openProgram(currentProgram);
 
         int shown = 0;
-        for (Address vtAddr : constructedVtables) {
+        for (Address vtAddr : localityMatches) {
             shown++;
             if (shown > MAX_DECOMPILED_OUTPUT) {
                 emit("(stopping decompile output after " + MAX_DECOMPILED_OUTPUT
-                        + " candidates - see count above)");
+                        + " locality-filtered candidates - see count above)");
                 break;
             }
             Address slot4Target = readPointer(mem, vtAddr.add(SLOT4_OFFSET));
             Address constructorSite = constructorSiteOf.get(vtAddr);
-            emit("========== CONSTRUCTED VTABLE CANDIDATE @ " + vtAddr + " ==========");
+            emit("========== LOCALITY-MATCHED VTABLE CANDIDATE @ " + vtAddr + " ==========");
             emit("  slot-4 (getBlock-equivalent) target: " + slot4Target);
             emit("  constructor install site (str into [x0,...]): " + constructorSite);
             Function ctorFn = getFunctionContaining(constructorSite);
