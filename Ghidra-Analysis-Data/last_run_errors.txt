@@ -12,4 +12,3 @@ WARN  Unable to fully apply external demangled Address Table at 14a91d80: std::u
 WARN  Unable to fully apply external demangled Address Table at 14a91d90: std::__ndk1::system_error::vtable (DemangledAddressTable)  
 WARN  Unable to fully apply external demangled Address Table at 14a91ed8: std::domain_error::typeinfo (DemangledAddressTable)  
 WARN  Unable to fully apply external demangled Address Table at 14a91ee8: std::domain_error::vtable (DemangledAddressTable)  
-INFO  FindConstructedVtables.java>   (constructor decompile failed) (GhidraScript)  
