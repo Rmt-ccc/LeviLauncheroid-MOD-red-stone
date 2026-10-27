@@ -37,6 +37,26 @@
 //
 // Only stage-3 survivors get decompiled and printed, keeping this
 // bounded even though stage 1/2 still scan the whole binary.
+//
+// Update after the first full run (stage 4 locality filter: 39
+// candidates, all 39 manually reviewed and none matched the known
+// getBlock shape - see project notes): stage 2's "x1/w1 index
+// arithmetic -> load" shape check was too permissive. Every one of
+// the 39 false positives (generic object-pool release, listener
+// notification dispatch, string-key name/registry lookup, etc.)
+// dereferenced x1 itself as a pointer somewhere in its body - loaded
+// through it as a base register, not just folded it into arithmetic
+// as a raw integer. A genuine index accessor (BlockSource::getBlock
+// equivalent) only ever treats x1 as an integer index combined with
+// some OTHER base register's array; it never reads memory through x1
+// directly. Stage 2 now rejects any candidate whose slot-4 target
+// uses x1/w1 as the base register of a load/store ("[x1, ...]",
+// "[x1]") anywhere in its body, before deciding whether the
+// arithmetic+load shape otherwise matches. This re-filters from the
+// full stage-1 vtable-shaped population, not from the old 39 - a
+// stricter stage 2 can surface candidates the previous (looser) stage
+// 2 run never got to because they happened to be outside the old
+// locality-filtered slice, so starting over from stage 1 is correct.
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -46,6 +66,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.decompiler.DecompileResults;
@@ -68,6 +89,15 @@ public class FindConstructedVtables extends GhidraScript {
     private static final int SHAPE_WALK_MAX_INSNS = 60;
     private static final int CONSTRUCTOR_STORE_WINDOW = 15;
     private static final int MAX_DECOMPILED_OUTPUT = 40;
+
+    // Matches x1/w1 appearing as the BASE register of an AArch64 memory
+    // operand ("[x1, #0x20]", "[x1]", "[x1, x2]") - i.e. x1 being read
+    // through as a pointer, as opposed to appearing elsewhere (e.g. as
+    // an offset register in "[x0, x1]", which is exactly the legitimate
+    // index-into-array pattern). Ghidra's Instruction.toString() prints
+    // the base register immediately after the opening bracket, so this
+    // is unambiguous.
+    private static final Pattern X1_BASE_DEREF = Pattern.compile("\\[\\s*(x1|w1)\\s*[,\\]]");
 
     private PrintWriter out;
 
@@ -115,7 +145,8 @@ public class FindConstructedVtables extends GhidraScript {
         emit("");
 
         emit("Stage 2: cheap instruction-shape check on each hit's slot-4 target "
-                + "(x1/w1 index arithmetic followed by a load)...");
+                + "(x1/w1 index arithmetic followed by a load, AND x1/w1 never "
+                + "dereferenced as a pointer base register anywhere in the body)...");
         Set<Address> stage2Vtables = new LinkedHashSet<>();
         for (Address vtAddr : vtableHits) {
             Address slot4Target = readPointer(mem, vtAddr.add(SLOT4_OFFSET));
@@ -312,9 +343,10 @@ public class FindConstructedVtables extends GhidraScript {
         }
     }
 
-    // Same cheap shape check as FindVtableSlot4Candidates.java: does the
-    // slot-4 target read x1/w1 (the index parameter) through arithmetic
-    // and later issue a load.
+    // Based on FindVtableSlot4Candidates.java's original shape check
+    // (does the slot-4 target read x1/w1, the index parameter, through
+    // arithmetic and later issue a load), plus the 案A pointer-dereference
+    // rejection added above after the first run's 39 false positives.
     private boolean looksLikeIndexAccessor(Listing listing, Address start) {
         Instruction insn = listing.getInstructionAt(start);
         boolean sawIndexArithmetic = false;
@@ -322,6 +354,18 @@ public class FindConstructedVtables extends GhidraScript {
         while (insn != null && count < SHAPE_WALK_MAX_INSNS) {
             String mn = insn.getMnemonicString().toLowerCase();
             String rep = insn.toString().toLowerCase();
+
+            // 案A rejection: if this instruction loads/stores through x1
+            // or w1 AS THE BASE REGISTER, the function is dereferencing
+            // its index argument as a pointer - disqualify immediately,
+            // regardless of what arithmetic appeared earlier or later.
+            boolean isMemOp = mn.startsWith("ldr") || mn.startsWith("ldp")
+                    || mn.startsWith("str") || mn.startsWith("stp")
+                    || mn.startsWith("ldur") || mn.startsWith("stur");
+            if (isMemOp && X1_BASE_DEREF.matcher(rep).find()) {
+                return false;
+            }
+
             boolean usesParam2Reg = rep.contains("x1") || rep.contains("w1");
             boolean isArithOp = mn.equals("mul") || mn.equals("umull") || mn.equals("smull")
                     || mn.equals("lsl") || mn.equals("add") || mn.equals("sub")
