@@ -1,0 +1,1246 @@
+Force-disassembling all executable memory (closing analyzer coverage gaps)...
+Force-disassembly pass added 7714 new instruction(s).
+
+Stage 1: scanning non-executable initialized memory for vtable-shaped runs (slots 0..4 all pointing at disassembled executable code)...
+Scanned 14436005 candidate word(s). Vtable-shaped hits: 86716
+
+Stage 2: cheap instruction-shape check on each hit's slot-4 target (x1/w1 index arithmetic followed by a load, AND x1/w1 never dereferenced as a pointer base register anywhere in the body)...
+Vtables surviving stage 2 (slot-4 shape matches): 44071
+
+Stage 3: building whole-program adrp+add materialization index, keeping only ADD-instruction hits whose target address is one of the stage-2 survivors above (bounded memory - we only ever retain hits for 44071 candidate address(es), not all ~600K materialized addresses in the binary)...
+Materialization sites found for 25105 of the 44071 stage-2 candidate(s).
+
+Stage 3b: for each materialization site, checking the next 15 instructions for a 'str <reg>, [x0, ...]' (the computed vtable address being stored into what looks like a fresh object's first field - the standard AArch64 constructor vtable-install idiom)...
+Vtables confirmed CONSTRUCTED (materialized then stored into [x0, ...] nearby - strong real-vtable signal): 673
+
+Stage 4: cheap summary of ALL 673 constructed-vtable candidate(s) - vtable address, slot-4 target, constructor entry point - no decompiling yet, so nothing here is capped:
+  vtable 14251438  slot4 0b624218  ctor_entry 0b6356c8
+  vtable 14201400  slot4 0ac78a7c  ctor_entry 0ac788bc
+  vtable 14691448  slot4 12602788  ctor_entry 12602580
+  vtable 14241408  slot4 0b43a31c  ctor_entry 0b43a0ec
+  vtable 142e1488  slot4 0c5a38a0  ctor_entry 0c5a2308
+  vtable 14251490  slot4 0b629494  ctor_entry 0b635df8
+  vtable 141215a0  slot4 09efaa04  ctor_entry 09efa7a0
+  vtable 141e1610  slot4 0aa94158  ctor_entry 0aa93e98
+  vtable 14251670  slot4 0b62f864  ctor_entry 0b636d34
+  vtable 14381730  slot4 0d746b24  ctor_entry 0d7468b4
+  vtable 14251730  slot4 0b62ec7c  ctor_entry 0b636274
+  vtable 14291730  slot4 0bd3cafc  ctor_entry 0bd3c8a0
+  vtable 141e1720  slot4 0aa94b2c  ctor_entry 0aa94818
+  vtable 14251790  slot4 0b631f1c  ctor_entry 0b636f08
+  vtable 13fc1028  slot4 07faf3dc  ctor_entry 07faf1c0
+  vtable 142717c0  slot4 0b9eec08  ctor_entry 0b9ee86c
+  vtable 142b1050  slot4 0c127510  ctor_entry 0c127048
+  vtable 14121090  slot4 09ef6774  ctor_entry 09ef6570
+  vtable 14761158  slot4 0687ee68  ctor_entry 069146f0
+  vtable 14161160  slot4 0a36b354  ctor_entry 0a36aed4
+  vtable 14251248  slot4 0b620680  ctor_entry 0b63515c
+  vtable 142512a0  slot4 0b627240  ctor_entry 0b635aa0
+  vtable 13fa1560  slot4 07b972a0  ctor_entry 07b971a4
+  vtable 142512f0  slot4 0b621a08  ctor_entry 0b635330
+  vtable 144a12a8  slot4 0bca138c  ctor_entry 0ff43b68
+  vtable 14121310  slot4 09ef8808  ctor_entry 09ef8608
+  vtable 14751310  slot4 13d97128  ctor_entry 13d94fc8
+  vtable 14251340  slot4 0b624928  ctor_entry 0b635c38
+  vtable 14251398  slot4 0b622ba4  ctor_entry 0b635530
+  vtable 142513e8  slot4 0b625f80  ctor_entry 0b63588c
+  vtable 14751398  slot4 13da1e24  ctor_entry 13da1c50
+  vtable 14281c30  slot4 0bb34ea4  ctor_entry 0bb34c70
+  vtable 14251c08  slot4 0b66b8e0  ctor_entry 0b66e84c
+  vtable 141e1c58  slot4 0aa9884c  ctor_entry 0aa0e71c
+  vtable 14661cf8  slot4 11fdd01c  ctor_entry 11fea5f8
+  vtable 14751df8  slot4 13da1e24  ctor_entry 13d9e7b8
+  vtable 14251d90  slot4 0b669cb0  ctor_entry 0b66ec30
+  vtable 14251e00  slot4 0b66d13c  ctor_entry 0b66ee04
+  vtable 14251e98  slot4 0b66d70c  ctor_entry 0b66efd8
+  vtable 14251f30  slot4 0b66dbe8  ctor_entry 0b66f1ac
+  vtable 14661fe0  slot4 120149bc  ctor_entry 1202af48
+  vtable 14251fc8  slot4 0b66e180  ctor_entry 0b66f330
+  vtable 14121820  slot4 09efcc04  ctor_entry 09efc9dc
+  vtable 14251870  slot4 0b6315a0  ctor_entry 0b636850
+  vtable 144118d0  slot4 0b237458  ctor_entry 0ed61da0
+  vtable 142518e0  slot4 0b63326c  ctor_entry 0b6370dc
+  vtable 141e1988  slot4 0aa96d5c  ctor_entry 0aa96ae8
+  vtable 142919b0  slot4 0bd3dec8  ctor_entry 0bd3dcf4
+  vtable 14691a38  slot4 1260cdec  ctor_entry 1260cbb0
+  vtable 14661a18  slot4 11ff0274  ctor_entry 11feff38
+  vtable 14441af0  slot4 0f306ed0  ctor_entry 0f3128f4
+  vtable 14431a88  slot4 0b1e48a4  ctor_entry 0f123a50
+  vtable 141e1b08  slot4 0aa97d30  ctor_entry 0aa979b8
+  vtable 14691b48  slot4 1260cdec  ctor_entry 1260d3e4
+  vtable 14381ba0  slot4 0d74843c  ctor_entry 0d74817c
+  vtable 141904a0  slot4 0a5b2ab4  ctor_entry 0a5b2ab4
+  vtable 142b04f8  slot4 0c104dc8  ctor_entry 0c104810
+  vtable 14190570  slot4 0a5b2e68  ctor_entry 0a5b2e68
+  vtable 142705a8  slot4 0ba16300  ctor_entry 0ba15fe4
+  vtable 142b05e8  slot4 0c105f44  ctor_entry 0c11cff4
+  vtable 142605c8  slot4 0b82b43c  ctor_entry 0b829bb4
+  vtable 14250610  slot4 0b5a6d20  ctor_entry 0b5d4bb8
+  vtable 142b0670  slot4 0c105f44  ctor_entry 0c108904
+  vtable 14250658  slot4 0b5a4400  ctor_entry 0b5d4814
+  vtable 142506a8  slot4 0b5a5768  ctor_entry 0b5d49b4
+  vtable 141206a8  slot4 09ee5d8c  ctor_entry 09ee5b64
+  vtable 142b06f8  slot4 0c1096c8  ctor_entry 0c11e6f0
+  vtable 14270728  slot4 0ba16d54  ctor_entry 0ba16b94
+  vtable 14220778  slot4 0aeaa364  ctor_entry 0aeaa160
+  vtable 142b0780  slot4 0c105f44  ctor_entry 0c10a09c
+  vtable 142007e8  slot4 0ac6f468  ctor_entry 0ac6f284
+  vtable 143807d0  slot4 0d6f8eb0  ctor_entry 0d6f826c
+  vtable 141f0010  slot4 0ab354e8  ctor_entry 0ab35118
+  vtable 142400c0  slot4 0b42ce5c  ctor_entry 0b42cc54
+  vtable 14770098  slot4 08583c10  ctor_entry 085b438c
+  vtable 141201a8  slot4 09ee0d58  ctor_entry 09ee0914
+  vtable 14550180  slot4 10656c88  ctor_entry 10d0ba78
+  vtable 147602e8  slot4 06ff90b4  ctor_entry 069c9c88
+  vtable 141f02a8  slot4 0ab37270  ctor_entry 0ab3708c
+  vtable 14120348  slot4 09ee13a0  ctor_entry 09ee1110
+  vtable 141f0340  slot4 0ab37a28  ctor_entry 0ab37844
+  vtable 14120398  slot4 09ee21f8  ctor_entry 09ee1f2c
+  vtable 145903f8  slot4 113cac2c  ctor_entry 0865c654
+  vtable 142b0c18  slot4 0c105f44  ctor_entry 0c114668
+  vtable 142b0ca0  slot4 0c105f44  ctor_entry 0c125448
+  vtable 14250cc8  slot4 0b61c3bc  ctor_entry 0b61c1b4
+  vtable 14270d68  slot4 0ba1a228  ctor_entry 0ba19f0c
+  vtable 14280d78  slot4 0bb10878  ctor_entry 0bb104dc
+  vtable 141e0e48  slot4 0aa8e144  ctor_entry 0aa8de0c
+  vtable 14210e98  slot4 0ad7b7c8  ctor_entry 0ad7b4cc
+  vtable 14250f00  slot4 0b630060  ctor_entry 0b636274
+  vtable 14600f50  slot4 11822ed8  ctor_entry 11822cbc
+  vtable 142b0808  slot4 0c105f44  ctor_entry 0c11fef0
+  vtable 142b0890  slot4 0c105f44  ctor_entry 0c120acc
+  vtable 142008e8  slot4 0ac703dc  ctor_entry 0ac701f8
+  vtable 141e0908  slot4 0aa8b35c  ctor_entry 0aa8add4
+  vtable 142b0918  slot4 0c105f44  ctor_entry 0c1216e4
+  vtable 142b09a0  slot4 0c105f44  ctor_entry 0c122408
+  vtable 14270988  slot4 0ba17f10  ctor_entry 0ba17bf4
+  vtable 142b0a28  slot4 0c105f44  ctor_entry 0c123020
+  vtable 142b0ab0  slot4 0c111738  ctor_entry 0c111428
+  vtable 14280a88  slot4 0bb000c0  ctor_entry 0bb1c038
+  vtable 14280af0  slot4 0bb022b0  ctor_entry 0bb01fcc
+  vtable 142b0b18  slot4 0c112ca4  ctor_entry 0c112830
+  vtable 14270b78  slot4 0ba19124  ctor_entry 0ba18ee8
+  vtable 142b0b90  slot4 0c105f44  ctor_entry 0c123c44
+  vtable 14263420  slot4 0b887744  ctor_entry 0b8873a8
+  vtable 142634a0  slot4 0b887be0  ctor_entry 0b84c980
+  vtable 14133558  slot4 0a0dcb40  ctor_entry 0a0dc788
+  vtable 14373550  slot4 0d653e98  ctor_entry 0d64e084
+  vtable 143735d8  slot4 0d697054  ctor_entry 0d655eb4
+  vtable 14163628  slot4 0a395794  ctor_entry 0a395534
+  vtable 141636a8  slot4 0a395c84  ctor_entry 0a395a24
+  vtable 143a3728  slot4 0dbe3bb4  ctor_entry 0dbe398c
+  vtable 146a3718  slot4 12955a74  ctor_entry 12955750
+  vtable 141337a8  slot4 0a0e0f60  ctor_entry 0a0e0bb8
+  vtable 141637a8  slot4 0a396720  ctor_entry 0a3964a8
+  vtable 140e37c0  slot4 0985c9a8  ctor_entry 0984730c
+  vtable 14523788  slot4 10b0b020  ctor_entry 10b0ad4c
+  vtable 14763040  slot4 0746406c  ctor_entry 071b8f8c
+  vtable 14763020  slot4 07176518  ctor_entry 0760ef84
+  vtable 14113048  slot4 09d79b04  ctor_entry 09d796f0
+  vtable 14103070  slot4 09c21c40  ctor_entry 09c21a80
+  vtable 14123090  slot4 09ec6f94  ctor_entry 09ec6d8c
+  vtable 14103180  slot4 09c22708  ctor_entry 09c22548
+  vtable 14263340  slot4 0b886b58  ctor_entry 0b8867a8
+  vtable 14193c18  slot4 0a5bff60  ctor_entry 0a5bff60
+  vtable 14163c28  slot4 0a39b388  ctor_entry 0a39aa84
+  vtable 142b3c60  slot4 0c15d3c4  ctor_entry 0c15d1bc
+  vtable 142c3d30  slot4 0c282bf8  ctor_entry 0c27d480
+  vtable 14193da0  slot4 0a5c0444  ctor_entry 0a5c0444
+  vtable 14383dd0  slot4 0d7905f4  ctor_entry 0d7902e8
+  vtable 14193e58  slot4 0a5c0710  ctor_entry 0a5c0710
+  vtable 141b3e80  slot4 0a6dc3b4  ctor_entry 0a6dc3b4
+  vtable 14283f28  slot4 0bb7edb0  ctor_entry 0bb7ebb4
+  vtable 14193f28  slot4 0a5c0ad0  ctor_entry 0a5c0ad0
+  vtable 14193fe0  slot4 0a5c0d9c  ctor_entry 0a5c0d9c
+  vtable 14273fd8  slot4 0ba4bfd8  ctor_entry 0ba4bcec
+  vtable 14163828  slot4 0a396c94  ctor_entry 0a396a2c
+  vtable 141b3858  slot4 0a6da4f8  ctor_entry 0a6da4f8
+  vtable 14013860  slot4 086065fc  ctor_entry 08606264
+  vtable 142b3890  slot4 0c15bc74  ctor_entry 0c14371c
+  vtable 141638a8  slot4 0a3976a8  ctor_entry 0a397440
+  vtable 146a38b8  slot4 12956d08  ctor_entry 12956ac4
+  vtable 14193920  slot4 0a5bf4a0  ctor_entry 0a5bf4a0
+  vtable 141b39c8  slot4 0a6daad4  ctor_entry 0a6daad4
+  vtable 142b3a10  slot4 0c15c1cc  ctor_entry 0c15bfc4
+  vtable 14163a28  slot4 0a398590  ctor_entry 0a398328
+  vtable 146a3a38  slot4 129574dc  ctor_entry 129572a4
+  vtable 141f3a68  slot4 0ab8a770  ctor_entry 0ab8a56c
+  vtable 14163aa8  slot4 0a399cd4  ctor_entry 0a399a6c
+  vtable 141f3b00  slot4 0ab8b4b0  ctor_entry 0ab8b2ac
+  vtable 14163b28  slot4 0a39a2f0  ctor_entry 0a39a088
+  vtable 14193b60  slot4 0a5bfc94  ctor_entry 0a5bfc94
+  vtable 14133ba0  slot4 0a0e1c64  ctor_entry 0a0e1a5c
+  vtable 14163ba8  slot4 0a39a8f8  ctor_entry 0a39a690
+  vtable 14692478  slot4 12641b44  ctor_entry 1264ce24
+  vtable 142b2480  slot4 0c105f44  ctor_entry 0c14c60c
+  vtable 142b2508  slot4 0c105f44  ctor_entry 0c14d1b0
+  vtable 142b2608  slot4 0c105f44  ctor_entry 0c14ddb8
+  vtable 14202670  slot4 0ac85e24  ctor_entry 0ac859c8
+  vtable 14292648  slot4 0bd45d70  ctor_entry 0bd45a8c
+  vtable 14282700  slot4 0bc0a364  ctor_entry 0bb4f0cc
+  vtable 141e2750  slot4 0aaa06e0  ctor_entry 0aaa0418
+  vtable 14122760  slot4 09f0c820  ctor_entry 09f0c49c
+  vtable 142027f0  slot4 0ac86bbc  ctor_entry 0ac869d8
+  vtable 141227e0  slot4 09f0ce28  ctor_entry 09f0caac
+  vtable 14252038  slot4 0b66e530  ctor_entry 0b66f4b4
+  vtable 14262050  slot4 0b86d1e0  ctor_entry 0b86d01c
+  vtable 146920e0  slot4 1264218c  ctor_entry 12666f00
+  vtable 13fc2690  slot4 07fdc330  ctor_entry 07fdbfb4
+  vtable 14692250  slot4 12641b44  ctor_entry 12644684
+  vtable 141e2240  slot4 0aa9b4cc  ctor_entry 0aa9b1e4
+  vtable 142823a8  slot4 0bb440e4  ctor_entry 0bb43b88
+  vtable 143923c0  slot4 0d9a2078  ctor_entry 0d9a1ca8
+  vtable 14532c40  slot4 10bf0630  ctor_entry 10bc3dd4
+  vtable 14262c00  slot4 0b87c50c  ctor_entry 0b87c23c
+  vtable 14402cc8  slot4 0ec019b4  ctor_entry 0ec04fd4
+  vtable 14282cb0  slot4 0bb6a638  ctor_entry 0bb70400
+  vtable 14382c80  slot4 0d77a288  ctor_entry 0d77e698
+  vtable 14692c98  slot4 12641b44  ctor_entry 126682e0
+  vtable 141e2d20  slot4 0aaa6ad0  ctor_entry 0aaa68cc
+  vtable 13fb2aa0  slot4 07d8600c  ctor_entry 07d85ea0
+  vtable 141e2da0  slot4 0aaa6fcc  ctor_entry 0aaa6e0c
+  vtable 142b2dc8  slot4 0c151488  ctor_entry 0c151268
+  vtable 14692e00  slot4 12641b44  ctor_entry 12664294
+  vtable 14402f00  slot4 0ec0680c  ctor_entry 0ea54884
+  vtable 141e2f40  slot4 0aaa8234  ctor_entry 0aaa7e78
+  vtable 141e28d0  slot4 0aaa1da8  ctor_entry 0aaa1a50
+  vtable 146928b8  slot4 12641b44  ctor_entry 126560ac
+  vtable 14692920  slot4 12641b44  ctor_entry 1265be98
+  vtable 141e2950  slot4 0aaa28c8  ctor_entry 0aaa2570
+  vtable 14442a68  slot4 0e69ac2c  ctor_entry 0f32e1fc
+  vtable 14122a70  slot4 09f10b48  ctor_entry 09e80df0
+  vtable 141b2a70  slot4 0a6d6dc8  ctor_entry 0a6d6dc8
+  vtable 14382a48  slot4 0d76416c  ctor_entry 0d763970
+  vtable 142b2ab0  slot4 0c14edd0  ctor_entry 0c14eb50
+  vtable 14282a90  slot4 0bb6a638  ctor_entry 0bb6fe3c
+  vtable 14692a88  slot4 12641b44  ctor_entry 12667c60
+  vtable 14282b18  slot4 0bb6a638  ctor_entry 0bb70020
+  vtable 14692b38  slot4 12641b44  ctor_entry 12667ea4
+  vtable 14692be8  slot4 12641b44  ctor_entry 1266809c
+  vtable 14282ba0  slot4 0bb6a638  ctor_entry 0bb701c0
+  vtable 14445400  slot4 0e574974  ctor_entry 0f3a8788
+  vtable 14165468  slot4 0a3b6758  ctor_entry 0a3b64f0
+  vtable 141654e8  slot4 0a3b6d70  ctor_entry 0a3b6b08
+  vtable 14695538  slot4 12687e2c  ctor_entry 12687bd0
+  vtable 142b5570  slot4 0c175970  ctor_entry 0c1756f0
+  vtable 142a5550  slot4 0c0218cc  ctor_entry 0c0215b0
+  vtable 141655e8  slot4 0a3b85c4  ctor_entry 0a3b835c
+  vtable 14695608  slot4 12641b44  ctor_entry 12641654
+  vtable 141656e8  slot4 0a3b9040  ctor_entry 0a3b8dd8
+  vtable 14665770  slot4 1208cf84  ctor_entry 1185bf14
+  vtable 14165768  slot4 0a3ba00c  ctor_entry 0a3b9da4
+  vtable 142857b0  slot4 0bbabb8c  ctor_entry 0bbaa348
+  vtable 14475058  slot4 0f89fdac  ctor_entry 0f89f790
+  vtable 142d50c0  slot4 0c3e54dc  ctor_entry 0c3e5170
+  vtable 141650e8  slot4 0a3b1fe8  ctor_entry 0a3b1d80
+  vtable 14455110  slot4 0e77ae34  ctor_entry 0f4fbb04
+  vtable 14375150  slot4 0d6a5d5c  ctor_entry 0d6a581c
+  vtable 142d51c0  slot4 0c3e664c  ctor_entry 0c3e63b8
+  vtable 141651e8  slot4 0a3b30c8  ctor_entry 0a3b2e68
+  vtable 14105220  slot4 09c304ec  ctor_entry 09c304ec
+  vtable 142d5240  slot4 0c3e7668  ctor_entry 0c3e73d4
+  vtable 14165268  slot4 0a3b3fc0  ctor_entry 0a3b3d58
+  vtable 144b5288  slot4 0b1e48a4  ctor_entry 101f0be0
+  vtable 141852c0  slot4 0a545abc  ctor_entry 0a545588
+  vtable 141652e8  slot4 0a3b4e68  ctor_entry 0a3b4c08
+  vtable 14185350  slot4 0a54d290  ctor_entry 0a553984
+  vtable 14165368  slot4 0a3b568c  ctor_entry 0a3b542c
+  vtable 14185398  slot4 0a54e500  ctor_entry 0a553e30
+  vtable 142c5c28  slot4 0c2b5ca8  ctor_entry 0c296c00
+  vtable 14265c60  slot4 0b8c2b48  ctor_entry 0b8c2940
+  vtable 142c5cb8  slot4 0c2b6b74  ctor_entry 0c2b6728
+  vtable 141a5d08  slot4 0a66e9f8  ctor_entry 0a676b50
+  vtable 142c5d38  slot4 0c2b71e8  ctor_entry 0c2b6d9c
+  vtable 142d5d10  slot4 0c3f4534  ctor_entry 0c3f42d4
+  vtable 14565d00  slot4 10e97450  ctor_entry 10e971ec
+  vtable 14695d00  slot4 1269bf80  ctor_entry 1269bd78
+  vtable 142c5db8  slot4 0c2b78d4  ctor_entry 0c2b7488
+  vtable 142c5eb8  slot4 0c2b8cd0  ctor_entry 0c2b8884
+  vtable 14135f28  slot4 0a0f1514  ctor_entry 0a0f12b4
+  vtable 142c5f48  slot4 0c2b950c  ctor_entry 0c2b90c0
+  vtable 14135fa8  slot4 0a0f195c  ctor_entry 0a0f16ec
+  vtable 142c5fc8  slot4 0c2b9d48  ctor_entry 0c2b98fc
+  vtable 14265828  slot4 0b8bf0c4  ctor_entry 0b8beee0
+  vtable 142b5838  slot4 0c17893c  ctor_entry 0c17870c
+  vtable 14665818  slot4 12089a9c  ctor_entry 120916b0
+  vtable 14165868  slot4 0a3bb56c  ctor_entry 0a3bb304
+  vtable 143758b8  slot4 0d6abd2c  ctor_entry 0d6abaac
+  vtable 141a5918  slot4 0a65775c  ctor_entry 0a673304
+  vtable 14375938  slot4 0d6ac48c  ctor_entry 0d6ac028
+  vtable 14285988  slot4 0bbb1620  ctor_entry 0bbc2d58
+  vtable 146a5a40  slot4 12982968  ctor_entry 12981f04
+  vtable 142a5b20  slot4 0c025dd8  ctor_entry 0c025bc0
+  vtable 142c5ba8  slot4 0c2b5558  ctor_entry 0c2b52e8
+  vtable 141a5be8  slot4 0a6647bc  ctor_entry 0a663c60
+  vtable 14194460  slot4 0a5c207c  ctor_entry 0a5c207c
+  vtable 14114498  slot4 09d81c4c  ctor_entry 09d816b0
+  vtable 14254548  slot4 0b6dd590  ctor_entry 0b6dc118
+  vtable 14194600  slot4 0a5c264c  ctor_entry 0a5c264c
+  vtable 141946b8  slot4 0a5c2918  ctor_entry 0a5c2918
+  vtable 146646d8  slot4 12078918  ctor_entry 120848a0
+  vtable 14424058  slot4 0efd10e4  ctor_entry 0efd0e40
+  vtable 14274048  slot4 0ba4c888  ctor_entry 0ba4c6c8
+  vtable 14264050  slot4 0b89ea6c  ctor_entry 0b8b2c9c
+  vtable 14194098  slot4 0a5c1068  ctor_entry 0a5c1068
+  vtable 141b4098  slot4 0a6dd228  ctor_entry 0a6dd228
+  vtable 142e4090  slot4 0c5d7084  ctor_entry 0c5d6398
+  vtable 142d4100  slot4 0c3ac4a0  ctor_entry 0c3ac1d0
+  vtable 142c4158  slot4 0c29cf3c  ctor_entry 0c29bda0
+  vtable 142d41e0  slot4 0c3ad278  ctor_entry 0c3acfac
+  vtable 142c41c0  slot4 0c29ecf8  ctor_entry 0c29d56c
+  vtable 142d4260  slot4 0c3ad76c  ctor_entry 0c3ad4a0
+  vtable 146b4238  slot4 12bf1ecc  ctor_entry 12bfa558
+  vtable 142b4298  slot4 0c162d30  ctor_entry 0c162ab4
+  vtable 13f844f0  slot4 07694b60  ctor_entry 07693274
+  vtable 14244318  slot4 10656c88  ctor_entry 0b4afa24
+  vtable 141943a8  slot4 0a5c1db0  ctor_entry 0a5c1db0
+  vtable 14164c68  slot4 0a3acff4  ctor_entry 0a3acd8c
+  vtable 14164ce8  slot4 0a3adb64  ctor_entry 0a3ad8fc
+  vtable 14164d68  slot4 0a3ae1b8  ctor_entry 0a3adf58
+  vtable 142c4de8  slot4 0c2aa8e0  ctor_entry 0c2aa6d8
+  vtable 14164dd8  slot4 0a3af418  ctor_entry 0a3af06c
+  vtable 13f44a10  slot4 06b81f84  ctor_entry 06b812b0
+  vtable 14164e68  slot4 0a3afbf4  ctor_entry 0a3af98c
+  vtable 14694ec8  slot4 12641b44  ctor_entry 12682f4c
+  vtable 14214f28  slot4 0adc8958  ctor_entry 0adc853c
+  vtable 14164f68  slot4 0a3b0ab4  ctor_entry 0a3b084c
+  vtable 14264f90  slot4 0b8b8d38  ctor_entry 0b8b8b50
+  vtable 14194828  slot4 0a5c2ef4  ctor_entry 0a5c2ef4
+  vtable 144348a8  slot4 0f18241c  ctor_entry 0f1e3c80
+  vtable 14534950  slot4 10bfba4c  ctor_entry 10bc7cf0
+  vtable 13f44ee8  slot4 06bb2cdc  ctor_entry 06bb2938
+  vtable 146a4950  slot4 12975c5c  ctor_entry 12975a98
+  vtable 146949a8  slot4 1267ea0c  ctor_entry 1267e8e4
+  vtable 142049d0  slot4 0aca31a8  ctor_entry 0aca2fc4
+  vtable 14164a68  slot4 0a3abbb4  ctor_entry 0a3ab954
+  vtable 14274a88  slot4 0ba504e8  ctor_entry 0ba50328
+  vtable 14164ae8  slot4 0a3abfa0  ctor_entry 0a3abd40
+  vtable 14244b18  slot4 10656c88  ctor_entry 0b4c3860
+  vtable 14194b50  slot4 0a5c3778  ctor_entry 0a5c3778
+  vtable 14204b70  slot4 0aca47f4  ctor_entry 0aca45b8
+  vtable 146a4ba8  slot4 12977948  ctor_entry 12977630
+  vtable 14164be8  slot4 0a3ac944  ctor_entry 0a3ac6dc
+  vtable 142a7548  slot4 0c05be80  ctor_entry 0c05bad8
+  vtable 14237600  slot4 0b1b10a4  ctor_entry 0b1b5b68
+  vtable 142c76e0  slot4 0c2f360c  ctor_entry 0c2f4d34
+  vtable 142c7028  slot4 0c2d940c  ctor_entry 0c2d8e44
+  vtable 14267050  slot4 0b8dd330  ctor_entry 0b900740
+  vtable 142c7170  slot4 0c2e1c60  ctor_entry 0c2e1620
+  vtable 14167218  slot4 0a3e95a4  ctor_entry 0a3f6888
+  vtable 142b7278  slot4 0c18e9e8  ctor_entry 0c18e7b8
+  vtable 142c7338  slot4 0c2ead98  ctor_entry 0c2ea5dc
+  vtable 14197c70  slot4 0a5eae54  ctor_entry 0a5ea9ac
+  vtable 14087ce0  slot4 090f588c  ctor_entry 090f331c
+  vtable 14187d10  slot4 0a5605dc  ctor_entry 0a5605dc
+  vtable 14197dd8  slot4 0a5ee87c  ctor_entry 0a5f8d1c
+  vtable 14257de0  slot4 0b786e28  ctor_entry 0b76c75c
+  vtable 142c7dc0  slot4 0c2fb1b8  ctor_entry 0c2faf0c
+  vtable 14187de0  slot4 0a56099c  ctor_entry 0a56099c
+  vtable 14197eb0  slot4 0a5f1444  ctor_entry 0a5f10d0
+  vtable 14427ef8  slot4 0d788008  ctor_entry 0f0331ec
+  vtable 14687eb0  slot4 1251e950  ctor_entry 1251b7c0
+  vtable 141b7f48  slot4 0a7595bc  ctor_entry 0a7593fc
+  vtable 14287f70  slot4 0bc0a364  ctor_entry 0bbe8f60
+  vtable 14187a98  slot4 0a55feec  ctor_entry 0a55feec
+  vtable 14567b30  slot4 10ed1d84  ctor_entry 10ed1818
+  vtable 14197b98  slot4 0a5d7c9c  ctor_entry 0a5f6dd8
+  vtable 141b7bd0  slot4 0a72a1dc  ctor_entry 0a729d64
+  vtable 14536450  slot4 10656c88  ctor_entry 10c50fe8
+  vtable 14226448  slot4 0aecc280  ctor_entry 0ae6a378
+  vtable 141664d0  slot4 0a3d7adc  ctor_entry 0a3d7874
+  vtable 142264d8  slot4 0aeccd58  ctor_entry 0aecc7e4
+  vtable 14166550  slot4 0a3d82d8  ctor_entry 0a3d8070
+  vtable 14286578  slot4 0bbd4904  ctor_entry 0bbd455c
+  vtable 141665d0  slot4 0a3d88e8  ctor_entry 0a3d8680
+  vtable 142966b8  slot4 0be2a7ac  ctor_entry 0be6f8bc
+  vtable 141666d0  slot4 0a3d909c  ctor_entry 0a3d8e34
+  vtable 14286708  slot4 0bbd6ee0  ctor_entry 0bbd66b4
+  vtable 146967e0  slot4 1269f5fc  ctor_entry 1269f3e4
+  vtable 141667d0  slot4 0a3d9850  ctor_entry 0a3d95e8
+  vtable 14286020  slot4 0bbca8a4  ctor_entry 0bb98938
+  vtable 144b6060  slot4 0b1e48a4  ctor_entry 10204f60
+  vtable 142a6040  slot4 0c028974  ctor_entry 0c028668
+  vtable 144460f0  slot4 0b1e48a4  ctor_entry 0f3c0844
+  vtable 14166150  slot4 0a3d3c94  ctor_entry 0a3d3a0c
+  vtable 141f6230  slot4 0abb0b88  ctor_entry 0abb0874
+  vtable 14166250  slot4 0a3d68b8  ctor_entry 0a3d6650
+  vtable 14136240  slot4 0a0f32ec  ctor_entry 0a0f308c
+  vtable 14166350  slot4 0a3d6ff0  ctor_entry 0a3d6d88
+  vtable 14296c80  slot4 0be2a7ac  ctor_entry 0be6f8bc
+  vtable 14696cd8  slot4 1269f5fc  ctor_entry 126b00ec
+  vtable 14246d20  slot4 0b4fac68  ctor_entry 0b4fa99c
+  vtable 142c6e60  slot4 0c2cae0c  ctor_entry 0c2c9334
+  vtable 142b6eb0  slot4 0c18bce4  ctor_entry 0c18ba64
+  vtable 14166ed8  slot4 0a3de1a8  ctor_entry 0a3dcb28
+  vtable 14166fe8  slot4 0a3de93c  ctor_entry 0a3de6d4
+  vtable 14166850  slot4 0a3da074  ctor_entry 0a3d9e0c
+  vtable 14546820  slot4 10656c88  ctor_entry 10cea8dc
+  vtable 141668d0  slot4 0a3da9a0  ctor_entry 0a3da738
+  vtable 14296960  slot4 0be2a7ac  ctor_entry 0be47838
+  vtable 14666928  slot4 120e1d34  ctor_entry 120e1a94
+  vtable 143769a0  slot4 0d6c902c  ctor_entry 0d6c8360
+  vtable 14166a50  slot4 0a3dbea4  ctor_entry 0a3dbc3c
+  vtable 14446a08  slot4 0d961eec  ctor_entry 0f3ce114
+  vtable 14166ad0  slot4 0a3dc3d0  ctor_entry 0a3dc168
+  vtable 14166b50  slot4 0a3dc9e4  ctor_entry 0a3dc784
+  vtable 14286bc0  slot4 0bbd9f14  ctor_entry 0bbd9ca4
+  vtable 14159438  slot4 0a2f9f38  ctor_entry 0a2f9cd4
+  vtable 14509400  slot4 109191a0  ctor_entry 0b185c58
+  vtable 141594b8  slot4 0a2fa5ac  ctor_entry 0a2fa214
+  vtable 14159528  slot4 0a2fb240  ctor_entry 0a2fafdc
+  vtable 142a9580  slot4 10a3dc4c  ctor_entry 0c0959c8
+  vtable 14189760  slot4 0a566ae8  ctor_entry 0a566ae8
+  vtable 145297e0  slot4 10b32e2c  ctor_entry 10b32b58
+  vtable 14069020  slot4 08e4571c  ctor_entry 08e51dc4
+  vtable 144590d8  slot4 0b1e48a4  ctor_entry 0f5d5b8c
+  vtable 14039248  slot4 08881504  ctor_entry 088813c4
+  vtable 141092c8  slot4 09c6c548  ctor_entry 09c6bc30
+  vtable 144592a8  slot4 0b477b0c  ctor_entry 0f5d842c
+  vtable 140392f0  slot4 08881860  ctor_entry 08881720
+  vtable 142c9328  slot4 0c30b904  ctor_entry 0c30b6fc
+  vtable 14129338  slot4 09fb4e9c  ctor_entry 09fcbdb0
+  vtable 14209c20  slot4 0ad27f84  ctor_entry 0ad27d80
+  vtable 14679c50  slot4 122b8818  ctor_entry 122b7174
+  vtable 144a9cc0  slot4 1006da08  ctor_entry 1006d5ec
+  vtable 146a9c88  slot4 12a24248  ctor_entry 12a24088
+  vtable 146a9df8  slot4 12a25d28  ctor_entry 12a25a10
+  vtable 14679d88  slot4 122bb710  ctor_entry 122b9c8c
+  vtable 14529e68  slot4 10b39408  ctor_entry 10b39134
+  vtable 14679ec0  slot4 122bebf0  ctor_entry 122bdcd0
+  vtable 146a9f58  slot4 12a26830  ctor_entry 12a265fc
+  vtable 141d9f50  slot4 0a91dce0  ctor_entry 0a91da84
+  vtable 14319810  slot4 0cbd9148  ctor_entry 0cbd8408
+  vtable 14159820  slot4 0a300b78  ctor_entry 0a300928
+  vtable 14499828  slot4 0fe6e4c4  ctor_entry 0fe6dfc8
+  vtable 142198a0  slot4 0ae0f918  ctor_entry 0ae0f5b0
+  vtable 142d98e0  slot4 0c45b478  ctor_entry 0c45ae60
+  vtable 145299b0  slot4 10b34104  ctor_entry 10b33e30
+  vtable 142a99c0  slot4 0c098060  ctor_entry 0c097dc0
+  vtable 14249b00  slot4 0b56e5b0  ctor_entry 0b56e310
+  vtable 14609b08  slot4 119d3ce8  ctor_entry 119d3a78
+  vtable 14529b80  slot4 10b36e58  ctor_entry 10b36b84
+  vtable 141485b8  slot4 0a1db57c  ctor_entry 0a1db300
+  vtable 14568590  slot4 10ef9c0c  ctor_entry 0cd6f3a4
+  vtable 144586b8  slot4 0b477b0c  ctor_entry 0f5c79c4
+  vtable 14488058  slot4 0e6fc8a0  ctor_entry 0fb0181c
+  vtable 14238008  slot4 0b1d4f64  ctor_entry 0d4e44b0
+  vtable 14168020  slot4 0a408fe0  ctor_entry 0a40e828
+  vtable 14428000  slot4 0d788008  ctor_entry 0f034954
+  vtable 142d8068  slot4 0c43b1d8  ctor_entry 0c44416c
+  vtable 14248068  slot4 0b50e29c  ctor_entry 0b50e094
+  vtable 14288140  slot4 0bc0a364  ctor_entry 0bbf8a18
+  vtable 14288180  slot4 0bc0a364  ctor_entry 0bc36608
+  vtable 141481c0  slot4 0a1d7ce8  ctor_entry 0a1d7b04
+  vtable 14248218  slot4 0b50f2e4  ctor_entry 0b50f0dc
+  vtable 141a8250  slot4 0a6916f8  ctor_entry 0a691514
+  vtable 14148240  slot4 0a1d8274  ctor_entry 0a1d7ea4
+  vtable 13fd8530  slot4 081d3ecc  ctor_entry 0830c548
+  vtable 14118c10  slot4 09df930c  ctor_entry 09e0fc48
+  vtable 141f8c10  slot4 0abd6c48  ctor_entry 0abd6884
+  vtable 14118ca0  slot4 09e03f34  ctor_entry 09e03af0
+  vtable 14688d38  slot4 12539528  ctor_entry 12538a8c
+  vtable 142a8d88  slot4 0c0709b0  ctor_entry 0c0706c0
+  vtable 14548e08  slot4 10656c88  ctor_entry 10ceab3c
+  vtable 146a8ee8  slot4 12a074e8  ctor_entry 12a07298
+  vtable 142a8f78  slot4 0c0711c4  ctor_entry 0c070fbc
+  vtable 142b8f40  slot4 0c105f44  ctor_entry 0c106b30
+  vtable 142b8fc8  slot4 0c1374d4  ctor_entry 09e96cbc
+  vtable 140388d8  slot4 0887a044  ctor_entry 08879da8
+  vtable 146a8960  slot4 129ffe90  ctor_entry 129ffc40
+  vtable 14188930  slot4 0a5638a0  ctor_entry 0a5638a0
+  vtable 142c89d8  slot4 0c30489c  ctor_entry 0c304694
+  vtable 14188a00  slot4 0a563c64  ctor_entry 0a563c64
+  vtable 13f38d58  slot4 066f946c  ctor_entry 066f8468
+  vtable 14188ad0  slot4 0a564028  ctor_entry 0a564028
+  vtable 14458b50  slot4 0b1bcbd8  ctor_entry 0f5ceed0
+  vtable 146ab460  slot4 12a4622c  ctor_entry 12a45fb4
+  vtable 146ab4e0  slot4 12a46754  ctor_entry 12a464dc
+  vtable 146ab570  slot4 12a46c48  ctor_entry 12a469d0
+  vtable 146ab5f0  slot4 12a470a0  ctor_entry 12a46eb8
+  vtable 1417b5e0  slot4 0a4d46dc  ctor_entry 0a4e87c8
+  vtable 146ab678  slot4 12a47f48  ctor_entry 12a47d60
+  vtable 1421b668  slot4 0ae23094  ctor_entry 0ae22c74
+  vtable 1451b600  slot4 10a6973c  ctor_entry 10a691ec
+  vtable 146ab6f8  slot4 12a482e4  ctor_entry 12a480fc
+  vtable 146ab778  slot4 12a487a0  ctor_entry 12a48528
+  vtable 142ab738  slot4 0c0ba598  ctor_entry 0c0ba2b8
+  vtable 1421b768  slot4 0ae23ef8  ctor_entry 0ae23ad8
+  vtable 146ab7f8  slot4 12a48bf4  ctor_entry 12a48a14
+  vtable 1401b7c0  slot4 086dcdbc  ctor_entry 086dcbdc
+  vtable 1439b7d0  slot4 0db104ec  ctor_entry 0db0ffc0
+  vtable 146ab060  slot4 12a429b0  ctor_entry 12a42738
+  vtable 146ab0e0  slot4 12a42edc  ctor_entry 12a42c64
+  vtable 1413b098  slot4 0a10f8c4  ctor_entry 0a10f668
+  vtable 1421b0e8  slot4 0ae1fb18  ctor_entry 0ae1f914
+  vtable 1452b0b0  slot4 10b4d514  ctor_entry 10b4d240
+  vtable 1462b088  slot4 11d48064  ctor_entry 11d528e0
+  vtable 1421b168  slot4 0ae1ffe8  ctor_entry 0ae1fc90
+  vtable 146ab268  slot4 12a44838  ctor_entry 12a445c0
+  vtable 1436b230  slot4 0d529b7c  ctor_entry 0d49acd8
+  vtable 1444b218  slot4 0f4554a0  ctor_entry 0ed7683c
+  vtable 1439b2a8  slot4 0dafd000  ctor_entry 0db0cd9c
+  vtable 1457b2f8  slot4 11248660  ctor_entry 112482b0
+  vtable 1440b280  slot4 0ecc2c18  ctor_entry 0ecc29f0
+  vtable 146ab338  slot4 12a44db4  ctor_entry 12a44b3c
+  vtable 142ab370  slot4 0c0b48cc  ctor_entry 0c0b464c
+  vtable 146ab3e0  slot4 12a45d94  ctor_entry 12a45b1c
+  vtable 1425bf90  slot4 0b7d3678  ctor_entry 0b7d3320
+  vtable 144abf80  slot4 0bca138c  ctor_entry 100acd84
+  vtable 1469b810  slot4 127a0220  ctor_entry 1273664c
+  vtable 1449b960  slot4 10656c88  ctor_entry 0febc8d8
+  vtable 141ab978  slot4 0a69ecec  ctor_entry 0a69ecec
+  vtable 146ab910  slot4 12a49b94  ctor_entry 12a4990c
+  vtable 146ab990  slot4 12a4a040  ctor_entry 12a49db8
+  vtable 146aba10  slot4 12a4a56c  ctor_entry 12a4a2f4
+  vtable 146aba90  slot4 12a4aa18  ctor_entry 12a4a790
+  vtable 146abb60  slot4 12a4b02c  ctor_entry 12a4add8
+  vtable 141abb00  slot4 0a69f1d0  ctor_entry 0a69f1d0
+  vtable 1463bb88  slot4 11dbbef4  ctor_entry 11dbb6e0
+  vtable 1454a468  slot4 10656c88  ctor_entry 10ce6cc8
+  vtable 1403a498  slot4 08a0ab40  ctor_entry 08a0a47c
+  vtable 1455a488  slot4 10d6d0c4  ctor_entry 10d6cd1c
+  vtable 1452a518  slot4 10b42b14  ctor_entry 10b42840
+  vtable 1451a590  slot4 10a4de0c  ctor_entry 10a4d888
+  vtable 146aa640  slot4 12a3840c  ctor_entry 12a381a0
+  vtable 1428a668  slot4 0bc55334  ctor_entry 0bc55170
+  vtable 146aa6c8  slot4 12a39238  ctor_entry 12a38fd0
+  vtable 146aa748  slot4 12a396c0  ctor_entry 12a39458
+  vtable 1424a740  slot4 0b581f80  ctor_entry 0b581c48
+  vtable 1424a7b0  slot4 0b58273c  ctor_entry 0b582464
+  vtable 146aa7c8  slot4 12a39be8  ctor_entry 12a39970
+  vtable 13f7a008  slot4 075165bc  ctor_entry 0751f340
+  vtable 1476a078  slot4 0ea67a40  ctor_entry 07c689bc
+  vtable 1476a060  slot4 0ea62a68  ctor_entry 07d65770
+  vtable 1476a068  slot4 0ea63944  ctor_entry 07d93170
+  vtable 1476a058  slot4 0ea61fec  ctor_entry 07c689bc
+  vtable 1476a048  slot4 0ea5f934  ctor_entry 07d770b4
+  vtable 1413a058  slot4 0a119480  ctor_entry 0a119200
+  vtable 1476a038  slot4 0ea5e458  ctor_entry 07c689bc
+  vtable 1476a020  slot4 0e9941d0  ctor_entry 07d631e8
+  vtable 1476a028  slot4 0e994ff8  ctor_entry 07eddfbc
+  vtable 1476a010  slot4 0e9922fc  ctor_entry 07c56668
+  vtable 1476a018  slot4 0e99333c  ctor_entry 07eafc7c
+  vtable 142ca050  slot4 0c3154ec  ctor_entry 0c316b90
+  vtable 1476a008  slot4 0e990c04  ctor_entry 07c6245c
+  vtable 1476a0f0  slot4 0ea78b84  ctor_entry 07fb12ec
+  vtable 1476a0e0  slot4 0ea77638  ctor_entry 07febc1c
+  vtable 1476a0d0  slot4 0ea75da8  ctor_entry 07ee2d1c
+  vtable 1476a0d8  slot4 0ea76844  ctor_entry 07eddfbc
+  vtable 1476a0b0  slot4 0ea6f704  ctor_entry 07da803c
+  vtable 1476a0b8  slot4 0ea71c4c  ctor_entry 07c689bc
+  vtable 1476a0a8  slot4 0ea6ecac  ctor_entry 07f0ee6c
+  vtable 1476a098  slot4 0ea6d0bc  ctor_entry 07c689bc
+  vtable 1476a080  slot4 0ea6a154  ctor_entry 07fb12ec
+  vtable 142aa218  slot4 0c0a30b0  ctor_entry 0c0a2e60
+  vtable 1449a2b8  slot4 10e69c2c  ctor_entry 0fe98790
+  vtable 1410ad88  slot4 09c7415c  ctor_entry 09c73e54
+  vtable 146aad80  slot4 12a3ed2c  ctor_entry 12a3eab4
+  vtable 1450ae40  slot4 10947514  ctor_entry 1094730c
+  vtable 1426ae68  slot4 0b93a360  ctor_entry 0b93a0f8
+  vtable 1452ae28  slot4 10b4c0c0  ctor_entry 10b4bdec
+  vtable 143caeb8  slot4 0e48a024  ctor_entry 0e489d84
+  vtable 146aafe0  slot4 12a42514  ctor_entry 12a4229c
+  vtable 142aa850  slot4 0c0aa834  ctor_entry 0c0aa5fc
+  vtable 13fdaf50  slot4 08378594  ctor_entry 0835d064
+  vtable 146aa950  slot4 12a3b584  ctor_entry 12a3b30c
+  vtable 1413a9c8  slot4 0a10ce84  ctor_entry 0a10cc18
+  vtable 146aaa70  slot4 12a3bc68  ctor_entry 12a3ba00
+  vtable 1452aa20  slot4 10b49500  ctor_entry 10b4922c
+  vtable 146aaaf8  slot4 12a3ca30  ctor_entry 12a3c7c8
+  vtable 1412aad0  slot4 0a078618  ctor_entry 09ff03f0
+  vtable 1451aab0  slot4 10a51244  ctor_entry 10a50cac
+  vtable 146aab78  slot4 12a3cebc  ctor_entry 12a3cc54
+  vtable 146aabf8  slot4 12a3d3e8  ctor_entry 12a3d170
+  vtable 1412abf0  slot4 0a0650c8  ctor_entry 09ff03f0
+  vtable 141cd490  slot4 0a872444  ctor_entry 0a872160
+  vtable 144dd4a8  slot4 10656c88  ctor_entry 104afd6c
+  vtable 1423d5c8  slot4 0b2842e8  ctor_entry 0b2b5220
+  vtable 1468d590  slot4 125b25e0  ctor_entry 125b8bdc
+  vtable 1448d6a0  slot4 0fbdb6e8  ctor_entry 0fbad2c8
+  vtable 141dd7a8  slot4 0a9a38f4  ctor_entry 0a9a35c0
+  vtable 142cd0e0  slot4 0c33fd40  ctor_entry 0c33fb38
+  vtable 1428d0f0  slot4 0bcb9d84  ctor_entry 0bcb99d0
+  vtable 1421d1b8  slot4 0a2b67a4  ctor_entry 0ae6c754
+  vtable 1445d1f0  slot4 0b477b0c  ctor_entry 0f61a068
+  vtable 1421d1c0  slot4 0adc94b4  ctor_entry 0ae420c0
+  vtable 1418d280  slot4 0a57b694  ctor_entry 0a57af98
+  vtable 13fdd558  slot4 08378594  ctor_entry 08395408
+  vtable 1418d3d8  slot4 0a587124  ctor_entry 0a59bad8
+  vtable 1418dc18  slot4 0a5a0c70  ctor_entry 0a5a0a68
+  vtable 1423dc50  slot4 0b403454  ctor_entry 0b4070e4
+  vtable 1420dce0  slot4 0ad5717c  ctor_entry 0ad56e68
+  vtable 145fde68  slot4 117c8f24  ctor_entry 117c8ba0
+  vtable 13fdd8e0  slot4 08378594  ctor_entry 08396e14
+  vtable 1468df88  slot4 125c170c  ctor_entry 125c14bc
+  vtable 144ed920  slot4 10b036c4  ctor_entry 09725680
+  vtable 146bdaf0  slot4 12dc8e7c  ctor_entry 12dc8e7c
+  vtable 1426dbc0  slot4 0b9dce94  ctor_entry 0b9dccd4
+  vtable 1423dbd0  slot4 0b3dfae8  ctor_entry 0b407d40
+  vtable 1425c4c0  slot4 0b7d8648  ctor_entry 0b7d829c
+  vtable 1439c5a0  slot4 0db279d4  ctor_entry 0db2780c
+  vtable 1445c660  slot4 0b477b0c  ctor_entry 0f60ee50
+  vtable 146ac770  slot4 12a63e50  ctor_entry 12a63b0c
+  vtable 146ac7f0  slot4 12a64444  ctor_entry 12a64104
+  vtable 1476c050  slot4 07df23f0  ctor_entry 07ee2d1c
+  vtable 1476c038  slot4 07df1334  ctor_entry 083aa280
+  vtable 1476c028  slot4 07df0e34  ctor_entry 07ee420c
+  vtable 1476c018  slot4 07df0934  ctor_entry 0813ec70
+  vtable 1476c0e0  slot4 07d09364  ctor_entry 07d0492c
+  vtable 1476c0e8  slot4 07d097b0  ctor_entry 07f87d70
+  vtable 1445c0e0  slot4 0b477b0c  ctor_entry 0f606ae4
+  vtable 1476c080  slot4 07df31d0  ctor_entry 07fcf098
+  vtable 146ac090  slot4 12a58e9c  ctor_entry 12a58cb4
+  vtable 1476c178  slot4 07d0cc90  ctor_entry 08412154
+  vtable 1476c160  slot4 07d0c578  ctor_entry 07fd7a80
+  vtable 1476c168  slot4 07d0c960  ctor_entry 08412774
+  vtable 1476c110  slot4 07d0aa28  ctor_entry 07e83afc
+  vtable 1476c118  slot4 07d0adb4  ctor_entry 07f8a0bc
+  vtable 146ac118  slot4 12a59a54  ctor_entry 12a5986c
+  vtable 1476c1f0  slot4 07d0ec68  ctor_entry 083a68fc
+  vtable 1476c1e8  slot4 07d0ea50  ctor_entry 083da1e4
+  vtable 1476c1d0  slot4 07d0e444  ctor_entry 07ef703c
+  vtable 1476c1d8  slot4 07d0e688  ctor_entry 083a68fc
+  vtable 1476c1a8  slot4 07d0d8fc  ctor_entry 07ef703c
+  vtable 146ac198  slot4 12a59dec  ctor_entry 12a59c04
+  vtable 1476c238  slot4 07d0fde0  ctor_entry 083a68fc
+  vtable 1476c220  slot4 07d0f718  ctor_entry 083a68fc
+  vtable 146ac218  slot4 12a5a2a4  ctor_entry 12a5a02c
+  vtable 1476c208  slot4 07d0f268  ctor_entry 083a68fc
+  vtable 1476c298  slot4 07d1242c  ctor_entry 083a68fc
+  vtable 1476c280  slot4 07d11d08  ctor_entry 083a68fc
+  vtable 1453c350  slot4 10656c88  ctor_entry 10c62b00
+  vtable 1410ccd0  slot4 09ccf320  ctor_entry 09ccf074
+  vtable 1451cd08  slot4 10a68a50  ctor_entry 10071774
+  vtable 1410ce08  slot4 09ccfd80  ctor_entry 09ccfad0
+  vtable 1428ce60  slot4 0bcb83e4  ctor_entry 0bcb8038
+  vtable 13f3c968  slot4 068be02c  ctor_entry 068bcbd8
+  vtable 144bcee8  slot4 1015b7e8  ctor_entry 0f0a3db4
+  vtable 1439ced0  slot4 0db31158  ctor_entry 0db30ef4
+  vtable 1428cf30  slot4 0bcb8b64  ctor_entry 0bcb87b8
+  vtable 1445c848  slot4 0e69ac2c  ctor_entry 0f611068
+  vtable 1424c8e0  slot4 0b56b8fc  ctor_entry 0b56b7b4
+  vtable 144ac9d8  slot4 0b1e48a4  ctor_entry 100b535c
+  vtable 142cc9c0  slot4 0c33a178  ctor_entry 0c339fac
+  vtable 1468cae8  slot4 125b25e0  ctor_entry 125b23b0
+  vtable 1449cb58  slot4 0fec50d4  ctor_entry 0fec4d2c
+  vtable 142bcb70  slot4 0c1ea26c  ctor_entry 0c1ea068
+  vtable 142bcbf0  slot4 0c1ea788  ctor_entry 0c1ea584
+  vtable 1465f470  slot4 11fa02a4  ctor_entry 11fa65c4
+  vtable 1465f4d0  slot4 11fa08a0  ctor_entry 11fa675c
+  vtable 1452f500  slot4 10b74388  ctor_entry 10b740b4
+  vtable 1421f5b0  slot4 0ae9ee00  ctor_entry 0ae9ebfc
+  vtable 1465f5f0  slot4 11fa1ed4  ctor_entry 11fa6bac
+  vtable 141af660  slot4 0a6b7f20  ctor_entry 0a6b7a9c
+  vtable 1414f780  slot4 0a23e5d4  ctor_entry 0a23e3f0
+  vtable 141ef028  slot4 0ab2d560  ctor_entry 0ab2d270
+  vtable 143df128  slot4 0bca047c  ctor_entry 0e7892b0
+  vtable 141ef198  slot4 0ab2e3f4  ctor_entry 0ab2e210
+  vtable 1465f1d0  slot4 11f9cca4  ctor_entry 11fa5dc4
+  vtable 1452f228  slot4 10b7171c  ctor_entry 10b7132c
+  vtable 1452f358  slot4 10b72984  ctor_entry 10b726b0
+  vtable 1439f308  slot4 0db1d804  ctor_entry 0db1d5fc
+  vtable 1427fc20  slot4 0baedb64  ctor_entry 0baed754
+  vtable 1452fc68  slot4 10b7bfb8  ctor_entry 10b7bce4
+  vtable 1449fe40  slot4 0ff25140  ctor_entry 0ff24d2c
+  vtable 1474fe80  slot4 13d6d830  ctor_entry 13d6afc0
+  vtable 144aff98  slot4 10126240  ctor_entry 1012bcb4
+  vtable 1465f840  slot4 11fb2c1c  ctor_entry 11fb5618
+  vtable 145ff878  slot4 117eec08  ctor_entry 117ee9e8
+  vtable 141af868  slot4 0a6be864  ctor_entry 0a6c6c98
+  vtable 145ff8b0  slot4 117ef4b8  ctor_entry 117ef0e8
+  vtable 1452f910  slot4 10b79050  ctor_entry 10b78d7c
+  vtable 1414fa30  slot4 0a240c20  ctor_entry 0a2000e8
+  vtable 142cfa48  slot4 0c36ff4c  ctor_entry 0c36d478
+  vtable 1465fa18  slot4 11faf148  ctor_entry 11fb49c4
+  vtable 1427fa80  slot4 0bae5f80  ctor_entry 0bae59b4
+  vtable 1427fae8  slot4 0bae8414  ctor_entry 0bae7eb0
+  vtable 1474faa8  slot4 13d59e0c  ctor_entry 13d5c99c
+  vtable 1427fb50  slot4 0baea824  ctor_entry 0baea454
+  vtable 1427fbb8  slot4 0baec908  ctor_entry 0baec4e0
+  vtable 1411fbd0  slot4 09ed3968  ctor_entry 09ed2c9c
+  vtable 1411e498  slot4 09ebfc88  ctor_entry 09ebfa2c
+  vtable 141ee688  slot4 0ab285b4  ctor_entry 0ab283f4
+  vtable 1425e7c0  slot4 0b7f81b0  ctor_entry 0b7f7fa0
+  vtable 1475e060  slot4 13e79aa0  ctor_entry 083f165c
+  vtable 1475e050  slot4 13e67f6c  ctor_entry 06e7c6a4
+  vtable 1475e058  slot4 13e74fac  ctor_entry 066cea8c
+  vtable 1475e040  slot4 13e1d2d0  ctor_entry 070b2e20
+  vtable 1475e048  slot4 13e51d3c  ctor_entry 07510a34
+  vtable 1475e030  slot4 13dd1308  ctor_entry 066cea8c
+  vtable 1475e038  slot4 13decd08  ctor_entry 06bbbe40
+  vtable 1468e038  slot4 125c214c  ctor_entry 125c1efc
+  vtable 1475e028  slot4 13dcdce0  ctor_entry 0760db0c
+  vtable 1475e018  slot4 13d67cb4  ctor_entry 070b2f40
+  vtable 1475e008  slot4 13d17e7c  ctor_entry 066cea8c
+  vtable 1454e190  slot4 10656c88  ctor_entry 10d0b7b0
+  vtable 1476e1b8  slot4 081cbb48  ctor_entry 0829b798
+  vtable 142ae368  slot4 0c0e31a0  ctor_entry 0c0e2e08
+  vtable 1441ec68  slot4 0f4554a0  ctor_entry 0f048174
+  vtable 1415ee80  slot4 0a31de18  ctor_entry 0a31dc48
+  vtable 141beed8  slot4 0a8266d4  ctor_entry 0a81c28c
+  vtable 1425eee8  slot4 10e69c2c  ctor_entry 0b7fd494
+  vtable 1452ef00  slot4 10b6eca4  ctor_entry 10b6e9d0
+  vtable 1413ef80  slot4 0a165bd4  ctor_entry 0a165910
+  vtable 1465e898  slot4 11f8ef58  ctor_entry 11f8e6f8
+  vtable 1425e9b0  slot4 0b7f9274  ctor_entry 0b7f906c
+  vtable 1475ea58  slot4 08377008  ctor_entry 0665c884
+  vtable 142ceaf0  slot4 0c3523e4  ctor_entry 0c2ce054
+  vtable 141beae0  slot4 0a80b350  ctor_entry 0a80ad30
+  vtable 1425eba0  slot4 0b7fa308  ctor_entry 0b7fa0ac
+  vtable 1444eb80  slot4 0efdb7a8  ctor_entry 0f4a0e90
+
+Stage 4 locality filter: constructor entry point within [09000000, 09100000) - the same neighborhood as FUN_09053250 and its 2 known callers. Survivors: 1 of 673
+
+========== LOCALITY-MATCHED VTABLE CANDIDATE @ 14087ce0 ==========
+  slot-4 (getBlock-equivalent) target: 090f588c
+  constructor install site (str into [x0,...]): 090f3334
+  constructor function: FUN_090f331c @ 090f331c
+  ---- decompiled constructor FUN_090f331c ----
+
+void FUN_090f331c(undefined8 *param_1)
+
+{
+  byte bVar1;
+  long lVar2;
+  long *plVar3;
+  long lVar4;
+  long *plVar5;
+  long lVar6;
+  long lVar7;
+  long *plVar8;
+  undefined8 *puStack_68;
+  long lStack_60;
+  long *plStack_58;
+  char cStack_50;
+  long lStack_48;
+  
+  *param_1 = &UNK_14087ce0;
+  func_0x0e654dc4(param_1 + 0x2c);
+  if ((*(byte *)(param_1 + 0x27) & 1) != 0) {
+    (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,param_1[0x29]);
+  }
+  if ((*(byte *)(param_1 + 0x24) & 1) != 0) {
+    (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,param_1[0x26]);
+  }
+  if ((*(char *)(param_1 + 0x23) != '\0') && ((*(byte *)(param_1 + 0x20) & 1) != 0)) {
+    (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,param_1[0x22]);
+  }
+  if ((*(byte *)(param_1 + 0x1d) & 1) != 0) {
+    (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,param_1[0x1f]);
+  }
+  if ((*(char *)(param_1 + 0x1c) != '\0') && ((*(byte *)(param_1 + 0x19) & 1) != 0)) {
+    (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,param_1[0x1b]);
+  }
+  if ((*(byte *)(param_1 + 0x16) & 1) != 0) {
+    (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,param_1[0x18]);
+  }
+  if (param_1[0x15] != 0) {
+    func_0x0e632710();
+  }
+  lVar2 = tpidr_el0;
+  lStack_48 = *(long *)(lVar2 + 0x28);
+  *param_1 = &UNK_14533368;
+  if ((param_1[4] != 0) &&
+     (plVar3 = (long *)std::__ndk1::__shared_weak_count::lock(), plVar3 != (long *)0x0)) {
+    lVar6 = param_1[3];
+    if ((lVar6 != 0) &&
+       (puStack_68 = param_1, lVar4 = func_0x10bbe64c(lVar6 + 0x60,&puStack_68), lVar4 != 0)) {
+      func_0x10bbe75c(&lStack_60,lVar6 + 0x60);
+      lVar6 = lStack_60;
+      lStack_60 = 0;
+      if (lVar6 != 0) {
+        if (cStack_50 != '\0') {
+          plVar5 = *(long **)(lVar6 + 0x40);
+          plVar8 = (long *)(lVar6 + 0x20);
+          if (plVar5 == plVar8) {
+            lVar4 = 4;
+          }
+          else {
+            if (plVar5 == (long *)0x0) goto LAB_10bd3df4;
+            lVar4 = 5;
+            plVar8 = plVar5;
+          }
+          (**(code **)(*plVar8 + lVar4 * 8))();
+        }
+LAB_10bd3df4:
+        (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,lVar6);
+      }
+    }
+    lVar6 = func_0x0e656410(0xffffffffffffffff,plVar3 + 1);
+    if (lVar6 == 0) {
+      (**(code **)(*plVar3 + 0x10))(plVar3);
+      std::__ndk1::__shared_weak_count::__release_weak();
+      lVar6 = param_1[0x13];
+      goto joined_r0x10bd3e20;
+    }
+  }
+  lVar6 = param_1[0x13];
+joined_r0x10bd3e20:
+  if (lVar6 != 0) {
+    plVar3 = (long *)std::__ndk1::__shared_weak_count::lock();
+    plStack_58 = plVar3;
+    if (plVar3 != (long *)0x0) {
+      lStack_60 = param_1[0x12];
+      if (lStack_60 != 0) {
+        (**(code **)(**(long **)(lStack_60 + 0x28) + 0x10))();
+      }
+      lVar6 = func_0x0e656410(0xffffffffffffffff,plVar3 + 1);
+      if (lVar6 == 0) {
+        (**(code **)(*plVar3 + 0x10))(plVar3);
+        std::__ndk1::__shared_weak_count::__release_weak();
+      }
+    }
+    if (param_1[0x13] != 0) {
+      std::__ndk1::__shared_weak_count::__release_weak();
+    }
+  }
+  plVar3 = (long *)param_1[0x11];
+  param_1[0x11] = 0;
+  if (plVar3 != (long *)0x0) {
+    (**(code **)(*plVar3 + 8))();
+  }
+  if (param_1[0xd] != 0) {
+    param_1[0xe] = param_1[0xd];
+    (**(code **)(lRam00000000148046d8 + 0x18))();
+  }
+  lVar6 = param_1[10];
+  if (lVar6 != 0) {
+    lVar7 = param_1[0xb];
+    lVar4 = lVar6;
+    if (lVar7 != lVar6) {
+      do {
+        if ((*(byte *)(lVar7 + -0x28) & 1) != 0) {
+          (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,*(undefined8 *)(lVar7 + -0x18));
+        }
+        lVar7 = lVar7 + -0x38;
+      } while (lVar7 != lVar6);
+      lVar4 = param_1[10];
+    }
+    param_1[0xb] = lVar6;
+    (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,lVar4);
+  }
+  plVar3 = (long *)param_1[7];
+  while (plVar3 != (long *)0x0) {
+    plVar8 = (long *)plVar3[6];
+    lVar6 = *plVar3;
+    if ((plVar8 == (long *)0x0) ||
+       (lVar4 = func_0x0e656410(0xffffffffffffffff,plVar8 + 1), lVar4 != 0)) {
+      bVar1 = *(byte *)(plVar3 + 2);
+    }
+    else {
+      (**(code **)(*plVar8 + 0x10))(plVar8);
+      std::__ndk1::__shared_weak_count::__release_weak();
+      bVar1 = *(byte *)(plVar3 + 2);
+    }
+    if ((bVar1 & 1) != 0) {
+      (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,plVar3[4]);
+    }
+    (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,plVar3);
+    plVar3 = (long *)lVar6;
+  }
+  lVar6 = param_1[5];
+  param_1[5] = 0;
+  if (lVar6 != 0) {
+    (**(code **)(lRam00000000148046d8 + 0x18))();
+  }
+  if (param_1[4] != 0) {
+    std::__ndk1::__shared_weak_count::__release_weak();
+  }
+  if (param_1[2] == 0) {
+    if (*(long *)(lVar2 + 0x28) == lStack_48) {
+      return;
+    }
+  }
+  else if (*(long *)(lVar2 + 0x28) == lStack_48) {
+    (*(code *)PTR___release_weak_14770580)();
+    return;
+  }
+                    /* WARNING: Subroutine does not return */
+  __stack_chk_fail();
+}
+
+
+  ---- end constructor FUN_090f331c ----
+  ---- decompiled slot-4 accessor FUN_090f588c ----
+
+/* WARNING: Possible PIC construction at 0x090f58d8: Changing call to branch */
+/* WARNING: Possible PIC construction at 0x090f59c4: Changing call to branch */
+/* WARNING: Possible PIC construction at 0x090f5998: Changing call to branch */
+/* WARNING: Possible PIC construction at 0x090f5900: Changing call to branch */
+/* WARNING: Removing unreachable block (ram,0x090f59c8) */
+/* WARNING: Removing unreachable block (ram,0x090f58dc) */
+/* WARNING: Removing unreachable block (ram,0x090f58e4) */
+/* WARNING: Removing unreachable block (ram,0x090f599c) */
+
+ulong * FUN_090f588c(ulong param_1,ulong *param_2)
+
+{
+  byte bVar1;
+  long lVar2;
+  undefined1 *puVar3;
+  undefined1 *puVar4;
+  undefined1 *puVar5;
+  ulong uVar6;
+  ulong uVar7;
+  ulong *puVar8;
+  ulong *puVar9;
+  ulong *puVar10;
+  uint uVar11;
+  ulong uVar12;
+  byte *pbVar13;
+  ulong unaff_x19;
+  ulong *unaff_x20;
+  byte *pbVar14;
+  ulong uVar15;
+  ulong *unaff_x21;
+  undefined8 unaff_x22;
+  ulong uVar16;
+  undefined8 unaff_x23;
+  undefined8 unaff_x24;
+  undefined8 unaff_x25;
+  ulong unaff_x26;
+  undefined1 *puVar17;
+  undefined1 *unaff_x29;
+  undefined8 uVar18;
+  undefined8 unaff_x30;
+  undefined1 auVar19 [16];
+  
+  puVar4 = &stack0xffffffffffffffd0;
+  puVar3 = &stack0xffffffffffffffd0;
+  puVar17 = &stack0xffffffffffffffd0;
+  puVar5 = &stack0xffffffffffffffd0;
+  puVar8 = (ulong *)(param_1 + 0xb0);
+  if (puVar8 == param_2) {
+    puVar9 = (ulong *)func_0x087a2878(param_1 + 200,param_2 + 3);
+    param_2 = *(ulong **)(param_1 + 0x88);
+    if (param_2 == (ulong *)0x0) {
+      return puVar9;
+    }
+    puVar9 = param_2 + 0x15;
+    puVar4 = (undefined1 *)register0x00000008;
+    if (puVar9 != puVar8) {
+      bVar1 = *(byte *)puVar8;
+      if ((*puVar9 & 1) != 0) {
+        uVar12 = (ulong)(bVar1 >> 1);
+        lVar2 = param_1 + 0xb1;
+        if ((bVar1 & 1) != 0) {
+          uVar12 = *(ulong *)(param_1 + 0xb8);
+          lVar2 = *(long *)(param_1 + 0xc0);
+        }
+        func_0x0861f370(puVar9,lVar2,uVar12);
+        puVar9 = param_2 + 0x18;
+        puVar10 = (ulong *)(param_1 + 200);
+        goto SUB_087a2878;
+      }
+      if ((bVar1 & 1) != 0) {
+        uVar12 = *(ulong *)(param_1 + 0xb8);
+        uVar16 = *(ulong *)(param_1 + 0xc0);
+        uVar18 = 0x90f59c8;
+        puVar3 = &stack0xffffffffffffffd0;
+        puVar17 = &stack0xffffffffffffffd0;
+        goto SUB_0861f26c;
+      }
+      uVar16 = *(ulong *)(param_1 + 0xb8);
+      uVar12 = *puVar8;
+      param_2[0x17] = *(ulong *)(param_1 + 0xc0);
+      param_2[0x16] = uVar16;
+      *puVar9 = uVar12;
+    }
+    puVar9 = param_2 + 0x18;
+    puVar10 = (ulong *)(param_1 + 200);
+SUB_087a2878:
+    *(undefined1 **)(puVar4 + -0x20) = unaff_x29;
+    *(undefined8 *)(puVar4 + -0x18) = unaff_x30;
+    *(ulong *)(puVar4 + -0x10) = unaff_x19;
+    bVar1 = (byte)puVar9[3];
+    if (bVar1 != (byte)puVar10[3]) {
+      if (bVar1 != 0) {
+        if ((*puVar9 & 1) != 0) {
+          (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,puVar9[2]);
+        }
+        *(byte *)(puVar9 + 3) = 0;
+        return puVar9;
+      }
+      if ((*puVar10 & 1) != 0) {
+        puVar8 = (ulong *)func_0x08605978(puVar9,puVar10[2],puVar10[1]);
+        *(byte *)(puVar9 + 3) = 1;
+        return puVar8;
+      }
+      uVar16 = puVar10[1];
+      uVar12 = *puVar10;
+      puVar9[2] = puVar10[2];
+      puVar9[1] = uVar16;
+      *puVar9 = uVar12;
+      *(byte *)(puVar9 + 3) = 1;
+      return puVar9;
+    }
+    if (puVar9 == puVar10) {
+      return puVar9;
+    }
+    if (bVar1 == 0) {
+      return puVar9;
+    }
+    bVar1 = (byte)*puVar10;
+    puVar8 = unaff_x20;
+    param_2 = unaff_x21;
+    if ((*puVar9 & 1) != 0) {
+      uVar16 = puVar10[1];
+      pbVar14 = (byte *)puVar10[2];
+      if ((bVar1 & 1) == 0) {
+        pbVar14 = (byte *)((long)puVar10 + 1);
+        uVar16 = (ulong)(bVar1 >> 1);
+      }
+      auVar19._8_8_ = pbVar14;
+      auVar19._0_8_ = puVar9;
+      param_1 = *(ulong *)(puVar4 + -0x10);
+      puVar5 = *(undefined1 **)(puVar4 + -0x20);
+      uVar18 = *(undefined8 *)(puVar4 + -0x18);
+      goto SUB_0861f370;
+    }
+    if ((bVar1 & 1) == 0) {
+      uVar16 = puVar10[1];
+      uVar12 = *puVar10;
+      puVar9[2] = puVar10[2];
+      puVar9[1] = uVar16;
+      *puVar9 = uVar12;
+      return puVar9;
+    }
+    uVar12 = puVar10[1];
+    uVar16 = puVar10[2];
+    param_1 = *(ulong *)(puVar4 + -0x10);
+    uVar18 = *(undefined8 *)(puVar4 + -0x18);
+    puVar3 = puVar4;
+    puVar17 = *(undefined1 **)(puVar4 + -0x20);
+  }
+  else {
+    bVar1 = (byte)*param_2;
+    if ((*(byte *)puVar8 & 1) != 0) {
+      uVar16 = param_2[1];
+      pbVar14 = (byte *)param_2[2];
+      if ((bVar1 & 1) == 0) {
+        pbVar14 = (byte *)((long)param_2 + 1);
+        uVar16 = (ulong)(bVar1 >> 1);
+      }
+      auVar19._8_8_ = pbVar14;
+      auVar19._0_8_ = puVar8;
+      uVar18 = 0x90f5904;
+      goto SUB_0861f370;
+    }
+    if ((bVar1 & 1) == 0) {
+      uVar16 = param_2[1];
+      uVar12 = *param_2;
+      *(ulong *)(param_1 + 0xc0) = param_2[2];
+      *(ulong *)(param_1 + 0xb8) = uVar16;
+      *puVar8 = uVar12;
+      puVar9 = (ulong *)(param_1 + 200);
+      puVar10 = param_2 + 3;
+      unaff_x30 = 0x90f58dc;
+      puVar4 = &stack0xffffffffffffffd0;
+      unaff_x19 = param_1;
+      unaff_x20 = puVar8;
+      unaff_x21 = param_2;
+      unaff_x29 = &stack0xffffffffffffffd0;
+      goto SUB_087a2878;
+    }
+    uVar12 = param_2[1];
+    uVar16 = param_2[2];
+    uVar18 = 0x90f599c;
+    puVar9 = puVar8;
+  }
+SUB_0861f26c:
+  puVar4 = puVar3 + -0x40;
+  puVar5 = puVar3 + -0x40;
+  *(undefined1 **)(puVar3 + -0x40) = puVar17;
+  *(undefined8 *)(puVar3 + -0x38) = uVar18;
+  *(undefined8 *)(puVar3 + -0x30) = unaff_x24;
+  *(undefined8 *)(puVar3 + -0x28) = unaff_x23;
+  *(undefined8 *)(puVar3 + -0x20) = unaff_x22;
+  *(ulong **)(puVar3 + -0x18) = param_2;
+  *(ulong **)(puVar3 + -0x10) = puVar8;
+  *(ulong *)(puVar3 + -8) = param_1;
+  if (uVar12 < 0x17) {
+    pbVar14 = (byte *)((long)puVar9 + 1);
+    *(byte *)puVar9 = (byte)((int)uVar12 << 1);
+    if (uVar12 != 0) {
+      func_0x0e629ae0(pbVar14,uVar16,uVar12);
+    }
+  }
+  else {
+    if (uVar12 + 0x11 < 0x27) {
+      uVar18 = 0x861f370;
+      uVar16 = uVar12;
+      auVar19 = FUN_08603098(puVar9);
+      param_1 = uVar12;
+      puVar8 = puVar9;
+SUB_0861f370:
+      puVar9 = auVar19._0_8_;
+      puVar3 = puVar4 + -0x50;
+      *(undefined1 **)(puVar4 + -0x50) = puVar5;
+      *(undefined8 *)(puVar4 + -0x48) = uVar18;
+      *(undefined8 *)(puVar4 + -0x40) = unaff_x25;
+      *(undefined8 *)(puVar4 + -0x30) = unaff_x24;
+      *(undefined8 *)(puVar4 + -0x28) = unaff_x23;
+      *(undefined8 *)(puVar4 + -0x20) = unaff_x22;
+      *(ulong **)(puVar4 + -0x18) = param_2;
+      *(ulong **)(puVar4 + -0x10) = puVar8;
+      *(ulong *)(puVar4 + -8) = param_1;
+      uVar12 = *puVar9 & 0xfffffffffffffffe;
+      if (uVar16 < uVar12) {
+        uVar15 = puVar9[2];
+        puVar9[1] = uVar16;
+        if (uVar16 != 0) {
+          func_0x0e629ae0(uVar15,auVar19._8_8_,uVar16);
+        }
+      }
+      else {
+        if (-uVar12 - 0x11 < (uVar16 - uVar12) + 1) {
+          uVar12 = uVar16;
+          FUN_08603098(puVar9);
+          uVar18 = 0x861f4d8;
+          auVar19 = func_0x08603160();
+          puVar5 = puVar4 + -0x50;
+          while( true ) {
+            puVar8 = auVar19._0_8_;
+            *(undefined1 **)(puVar5 + -0x50) = puVar3;
+            *(undefined8 *)(puVar5 + -0x48) = uVar18;
+            *(ulong *)(puVar5 + -0x40) = unaff_x26;
+            *(undefined8 *)(puVar5 + -0x38) = unaff_x25;
+            *(undefined8 *)(puVar5 + -0x30) = unaff_x24;
+            *(undefined8 *)(puVar5 + -0x28) = unaff_x23;
+            *(undefined8 *)(puVar5 + -0x20) = unaff_x22;
+            *(ulong **)(puVar5 + -0x18) = param_2;
+            *(ulong **)(puVar5 + -0x10) = puVar9;
+            *(ulong *)(puVar5 + -8) = uVar16;
+            uVar6 = *puVar8;
+            bVar1 = (byte)*puVar8;
+            unaff_x26 = (ulong)bVar1;
+            uVar11 = (uint)uVar6 & 0xff;
+            uVar16 = 0x16;
+            if ((bVar1 & 1) != 0) {
+              uVar16 = (uVar6 & 0xfffffffffffffffe) - 1;
+            }
+            if (uVar12 <= uVar16) break;
+            if (uVar12 - uVar16 <= -uVar16 - 0x12) {
+              pbVar13 = (byte *)puVar8[2];
+              if ((uVar6 & 1) == 0) {
+                pbVar13 = (byte *)((long)puVar8 + 1);
+              }
+              if (uVar16 < 0x7fffffffffffffe7) {
+                uVar6 = uVar12;
+                if (uVar12 <= uVar16 * 2) {
+                  uVar6 = uVar16 * 2;
+                }
+                uVar16 = 0x17;
+                if (0x16 < uVar6) {
+                  uVar16 = (uVar6 | 0xf) + 1;
+                }
+              }
+              else {
+                uVar16 = 0xffffffffffffffef;
+              }
+              pbVar14 = (byte *)(**(code **)(lRam00000000148046d8 + 0x10))(0x148046d8,uVar16);
+              if (((uVar16 != 0) && (pbVar14 == (byte *)0x0)) &&
+                 (uVar6 = func_0x0e654bd0("We failed to allocate %zu bytes.","pointer || size == 0",
+                                          0x25,
+                                          "D:\\a\\_work\\1\\s/src/base/Core/src/Memory/MemoryOperators.cpp"
+                                          ,"void *operator new(size_t)",uVar16), (uVar6 & 1) != 0))
+              {
+                func_0x0e654bd4();
+              }
+              func_0x0e629a4c(pbVar14,auVar19._8_8_,uVar12);
+              if ((bVar1 & 1) != 0) {
+                (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,pbVar13);
+              }
+              puVar8[2] = (ulong)pbVar14;
+              *puVar8 = uVar16 | 1;
+LAB_0861f634:
+              puVar8[1] = uVar12;
+LAB_0861f638:
+              pbVar14[uVar12] = 0;
+              return puVar8;
+            }
+            FUN_08603098(puVar8);
+            auVar19 = func_0x08603160();
+            *(undefined1 **)(puVar5 + -0x70) = puVar5 + -0x50;
+            *(undefined8 *)(puVar5 + -0x68) = 0x861f664;
+            *(ulong **)(puVar5 + -0x60) = puVar8;
+            *(ulong *)(puVar5 + -0x58) = uVar12;
+            uVar12 = func_0x0e629a44(auVar19._8_8_);
+            puVar9 = *(ulong **)(puVar5 + -0x60);
+            uVar16 = *(ulong *)(puVar5 + -0x58);
+            puVar3 = *(undefined1 **)(puVar5 + -0x70);
+            uVar18 = *(undefined8 *)(puVar5 + -0x68);
+            puVar5 = puVar5 + -0x50;
+          }
+          pbVar14 = (byte *)puVar8[2];
+          if ((uVar6 & 1) == 0) {
+            pbVar14 = (byte *)((long)puVar8 + 1);
+          }
+          if (uVar12 != 0) {
+            func_0x0e629ae0(pbVar14,auVar19._8_8_,uVar12);
+            uVar11 = (uint)(byte)*puVar8;
+          }
+          if ((uVar11 & 1) != 0) goto LAB_0861f634;
+          *(byte *)puVar8 = (byte)((int)uVar12 << 1);
+          goto LAB_0861f638;
+        }
+        uVar6 = puVar9[2];
+        if ((*puVar9 & 1) == 0) {
+          uVar6 = (long)puVar9 + 1;
+        }
+        if (uVar12 - 1 < 0x7fffffffffffffe7) {
+          uVar12 = (uVar12 - 1) * 2;
+          uVar15 = uVar16;
+          if (uVar16 <= uVar12) {
+            uVar15 = uVar12;
+          }
+          uVar12 = 0x17;
+          if (0x16 < uVar15) {
+            uVar12 = (uVar15 | 0xf) + 1;
+          }
+        }
+        else {
+          uVar12 = 0xffffffffffffffef;
+        }
+        uVar15 = (**(code **)(lRam00000000148046d8 + 0x10))(0x148046d8,uVar12);
+        if (((uVar12 != 0) && (uVar15 == 0)) &&
+           (uVar7 = func_0x0e654bd0("We failed to allocate %zu bytes.","pointer || size == 0",0x25,
+                                    "D:\\a\\_work\\1\\s/src/base/Core/src/Memory/MemoryOperators.cpp"
+                                    ,"void *operator new(size_t)",uVar12), (uVar7 & 1) != 0)) {
+          func_0x0e654bd4();
+        }
+        if (uVar16 != 0) {
+          func_0x0e629a4c(uVar15,auVar19._8_8_,uVar16);
+        }
+        (**(code **)(lRam00000000148046d8 + 0x18))(0x148046d8,uVar6);
+        puVar9[1] = uVar16;
+        puVar9[2] = uVar15;
+        *puVar9 = uVar12 | 1;
+      }
+      *(undefined1 *)(uVar15 + uVar16) = 0;
+      return puVar9;
+    }
+    uVar6 = uVar12;
+    if (uVar12 < 0x2d) {
+      uVar6 = 0x2c;
+    }
+    uVar15 = (uVar6 | 0xf) + 1;
+    pbVar14 = (byte *)(**(code **)(lRam00000000148046d8 + 0x10))(0x148046d8,uVar15);
+    if ((((uVar6 | 0xf) != 0xffffffffffffffff) && (pbVar14 == (byte *)0x0)) &&
+       (uVar6 = func_0x0e654bd0("We failed to allocate %zu bytes.","pointer || size == 0",0x25,
+                                "D:\\a\\_work\\1\\s/src/base/Core/src/Memory/MemoryOperators.cpp",
+                                "void *operator new(size_t)",uVar15), (uVar6 & 1) != 0)) {
+      func_0x0e654bd4();
+    }
+    func_0x0e629a4c(pbVar14,uVar16,uVar12);
+    puVar9[1] = uVar12;
+    puVar9[2] = (ulong)pbVar14;
+    *puVar9 = uVar15 | 1;
+  }
+  pbVar14[uVar12] = 0;
+  return puVar9;
+}
+
+
+  ---- end slot-4 accessor FUN_090f588c ----
+========== end candidate @ 14087ce0 ==========
+
