@@ -57,6 +57,19 @@
 // stricter stage 2 can surface candidates the previous (looser) stage
 // 2 run never got to because they happened to be outside the old
 // locality-filtered slice, so starting over from stage 1 is correct.
+//
+// Update after 案B (Unicorn dynamic verification of the 27 candidates
+// that 案A's run produced): the deeper problem wasn't x1 usage at all -
+// capstone-disassembling the real .so at each of the 18 unique slot-4
+// target addresses showed 17 of 18 are NOT genuine function entries.
+// They land mid-function (e.g. straight into a `cbnz x21, ...` or a
+// stack-local reload `ldur x9, [x29, #-8]`, expecting caller-saved
+// register state from one specific internal call site), not at a real
+// AArch64 prologue. fitsVtableShape()'s "points at *a* disassembled
+// instruction" check was far too weak for a ~330MB binary: huge numbers
+// of coincidental 8-byte values equal SOME mid-function address. Added
+// isLikelyFunctionEntry() and now require every slot (not just slot 4)
+// to pass it before a candidate counts as vtable-shaped at all.
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -316,7 +329,29 @@ public class FindConstructedVtables extends GhidraScript {
         }
     }
 
-    // Same vtable-shape check as FindVtableSlot4Candidates.java.
+    // Same vtable-shape check as FindVtableSlot4Candidates.java, PLUS a
+    // real-function-entry check added after Unicorn-based dynamic
+    // verification (案B) exposed the root problem with every previous
+    // run of this script: "points at a disassembled instruction" is far
+    // too weak a test. In a ~330MB binary, huge numbers of unrelated
+    // 8-byte data values coincidentally equal SOME address that happens
+    // to fall mid-function (not at a prologue) - e.g. a jump target
+    // reached only via an internal branch, expecting live caller-saved
+    // register state from a specific call site, not a fresh ABI entry.
+    // Calling such an address as if it were "(this, index) -> Block*"
+    // is meaningless. Checked directly in the real .so with capstone:
+    // of the 18 unique slot-4 targets that survived the OLD filter
+    // through to the stage-4 locality-filtered candidate list, 17 of 18
+    // were confirmed to NOT be genuine function entries (no stp/sub-sp/
+    // paciasp/bti prologue - straight into mid-function code instead).
+    // This explains why every prior pass (试行13/17, 案A) found nothing:
+    // most of what it called a "vtable" wasn't one.
+    //
+    // Now requires every checked slot to be a genuine function entry:
+    // either Ghidra already has a Function there, or the first
+    // instruction is a recognized AArch64 Android/NDK clang prologue
+    // opener (stp x29/x30 or x30 alone onto the stack, sub sp,sp,#imm,
+    // or a pointer-auth/BTI landing instruction).
     private boolean fitsVtableShape(Memory mem, Listing listing, Address addr, Address blockEnd) {
         try {
             if (addr.add(SLOT4_OFFSET).compareTo(blockEnd) > 0) return false;
@@ -328,9 +363,30 @@ public class FindConstructedVtables extends GhidraScript {
             if (target == null) return false;
             MemoryBlock targetBlock = mem.getBlock(target);
             if (targetBlock == null || !targetBlock.isExecute()) return false;
-            if (listing.getInstructionAt(target) == null) return false;
+            Instruction insn = listing.getInstructionAt(target);
+            if (insn == null) return false;
+            if (!isLikelyFunctionEntry(listing, target, insn)) return false;
         }
         return true;
+    }
+
+    private boolean isLikelyFunctionEntry(Listing listing, Address target, Instruction insn) {
+        if (getFunctionAt(target) != null) {
+            return true;
+        }
+        String mn = insn.getMnemonicString().toLowerCase();
+        String rep = insn.toString().toLowerCase();
+        if (mn.equals("paciasp") || mn.equals("pacibsp") || mn.equals("bti")) {
+            return true;
+        }
+        if (mn.equals("sub") && rep.contains("sp")) {
+            return true;
+        }
+        if ((mn.equals("stp") || mn.equals("str")) && rep.contains("sp")
+                && (rep.contains("x29") || rep.contains("x30"))) {
+            return true;
+        }
+        return false;
     }
 
     private Address readPointer(Memory mem, Address at) {
