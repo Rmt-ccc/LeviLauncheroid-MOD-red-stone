@@ -1,0 +1,4 @@
+Usage: revng [OPTIONS] COMMAND [ARGS]...
+Try 'revng --help' for help.
+
+Error: No such command 'analyze'.
