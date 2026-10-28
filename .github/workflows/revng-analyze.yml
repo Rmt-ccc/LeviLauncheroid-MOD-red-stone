@@ -46,29 +46,49 @@ jobs:
       - name: Import binary into a revng model
         run: |
           revng analyze import-binary libminecraftpe.so -o model.yml 2>&1 | tee import.log
+          echo "--- model.yml (first 60 lines) ---"
+          head -60 model.yml || true
+          wc -l model.yml || true
 
       - name: Run initial auto-analysis
         run: |
+          set -x
+          revng analyze --help 2>&1 | tee analyze_help.log || true
           revng analyze \
             --resume=working-directory \
             revng-initial-auto-analysis \
             libminecraftpe.so \
             -o /dev/null 2>&1 | tee autoanalysis.log
+          echo "--- working-directory layout (depth 4) ---"
+          find working-directory -maxdepth 4 2>&1 | tee workdir_layout.log
 
       - name: Extract function list from the model
         run: |
-          # Model should now have Functions: populated with one entry
-          # per detected function, keyed by MetaAddress (e.g.
-          # "0x9053250:Code_aarch64"). Dump the raw function list plus
-          # a grep for our known addresses of interest from the Ghidra
-          # side of this investigation, so this run's results can be
-          # diffed against Ghidra's directly without needing the full
-          # model file pulled down by hand.
-          revng model dump working-directory/revng-initial-auto-analysis/model.yml > model_dump.yml 2>&1 || \
-            cp working-directory/revng-initial-auto-analysis/model.yml model_dump.yml 2>&1 || true
+          set -x
+          # The exact on-disk path/format of the post-analysis model
+          # wasn't confirmed ahead of time (rev.ng's docs don't fully
+          # spell out the resume-directory layout), so locate it by
+          # searching the resume directory for any YAML containing a
+          # Functions: list instead of guessing one fixed path.
+          MODEL_FILE=""
+          for f in $(find working-directory -type f \( -name "*.yml" -o -name "*.yaml" \) 2>/dev/null); do
+            if grep -q "^Functions:" "$f" 2>/dev/null; then
+              MODEL_FILE="$f"
+              break
+            fi
+          done
+          echo "Resolved model file: ${MODEL_FILE:-NONE FOUND}" | tee model_resolution.log
+
+          if [ -n "$MODEL_FILE" ]; then
+            cp "$MODEL_FILE" model_dump.yml
+          else
+            : > model_dump.yml
+          fi
           grep -c "Entry:" model_dump.yml > function_count.txt 2>&1 || echo "0" > function_count.txt
 
           {
+            echo "=== Resolved model file: ${MODEL_FILE:-NONE FOUND} ==="
+            echo ""
             echo "=== Known addresses of interest (from Ghidra-side investigation) ==="
             for addr in 09053250 09054334 090647b8 090f331c 090f588c 09064b54 14087ce0; do
               echo "--- 0x$addr ---"
@@ -95,14 +115,21 @@ jobs:
           if-no-files-found: warn
 
       - name: Commit results to the repo
+        if: always()
         run: |
           mkdir -p Revng-Analysis-Data
-          cp revng_findings.txt Revng-Analysis-Data/revng_findings-$(date +%Y%m%d-%H%M%S).txt 2>/dev/null || true
+          STAMP=$(date +%Y%m%d-%H%M%S)
+          cp revng_findings.txt "Revng-Analysis-Data/revng_findings-$STAMP.txt" 2>/dev/null || true
+          # Debug logs - small, always commit directly (not just as a
+          # workflow artifact, which this project can't reliably fetch
+          # back from outside GitHub Actions).
+          for log in import.log analyze_help.log autoanalysis.log workdir_layout.log model_resolution.log; do
+            [ -f "$log" ] && cp "$log" "Revng-Analysis-Data/${log%.log}-$STAMP.log"
+          done
           # model_dump.yml can be very large for a 330MB binary - only
-          # commit it if it's under a sane size, otherwise leave it as
-          # a workflow artifact only (downloadable from the Actions run).
+          # commit it if it's under a sane size.
           if [ -f model_dump.yml ] && [ "$(stat -c%s model_dump.yml 2>/dev/null || echo 999999999)" -lt 20000000 ]; then
-            cp model_dump.yml Revng-Analysis-Data/model_dump-$(date +%Y%m%d-%H%M%S).yml
+            cp model_dump.yml "Revng-Analysis-Data/model_dump-$STAMP.yml"
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
