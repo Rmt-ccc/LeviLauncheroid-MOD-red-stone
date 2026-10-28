@@ -1,0 +1,4 @@
+Usage: revng model [OPTIONS] COMMAND [ARGS]...
+Try 'revng model --help' for help.
+
+Error: No such command 'dump'.
