@@ -1,0 +1,115 @@
+name: revng Analyze
+
+# Exploratory run of rev.ng (https://rev.ng) against the same target
+# binary as ghidra-analyze.yml, as an alternative/cross-check tool -
+# user's choice to try it out. This is a first pass: rev.ng's own
+# function-boundary detection is used to cross-validate the addresses
+# Ghidra's FindConstructedVtables.java already flagged (does rev.ng
+# agree these are real function entries?), and to see whether it finds
+# additional function starts near the known-interesting neighborhood
+# (FUN_09053250 and its 2 known callers, ~0x09000000-0x09070000) that
+# Ghidra's heuristics missed. Full whole-binary decompilation is NOT
+# attempted here - this binary is ~330MB and rev.ng's scalability at
+# that size for a from-scratch auto-analysis is untested in this
+# project, so the first run just imports + runs the initial
+# auto-analysis and inspects the resulting model, rather than also
+# paying for a (possibly very expensive or failing) emit-c pass.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install revng (distributable binary release)
+        run: |
+          curl -L -s https://rev.ng/downloads/revng-distributable/master/install.sh | bash
+          echo "$PWD/revng" >> "$GITHUB_PATH"
+
+      - name: Download target binary from this repo's release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download ghidra-binary --repo ${{ github.repository }} --pattern "libminecraftpe.so"
+
+      - name: revng doctor / sanity check
+        run: |
+          revng version || true
+          revng --help || true
+
+      - name: Import binary into a revng model
+        run: |
+          revng analyze import-binary libminecraftpe.so -o model.yml 2>&1 | tee import.log
+
+      - name: Run initial auto-analysis
+        run: |
+          revng analyze \
+            --resume=working-directory \
+            revng-initial-auto-analysis \
+            libminecraftpe.so \
+            -o /dev/null 2>&1 | tee autoanalysis.log
+
+      - name: Extract function list from the model
+        run: |
+          # Model should now have Functions: populated with one entry
+          # per detected function, keyed by MetaAddress (e.g.
+          # "0x9053250:Code_aarch64"). Dump the raw function list plus
+          # a grep for our known addresses of interest from the Ghidra
+          # side of this investigation, so this run's results can be
+          # diffed against Ghidra's directly without needing the full
+          # model file pulled down by hand.
+          revng model dump working-directory/revng-initial-auto-analysis/model.yml > model_dump.yml 2>&1 || \
+            cp working-directory/revng-initial-auto-analysis/model.yml model_dump.yml 2>&1 || true
+          grep -c "Entry:" model_dump.yml > function_count.txt 2>&1 || echo "0" > function_count.txt
+
+          {
+            echo "=== Known addresses of interest (from Ghidra-side investigation) ==="
+            for addr in 09053250 09054334 090647b8 090f331c 090f588c 09064b54 14087ce0; do
+              echo "--- 0x$addr ---"
+              grep -i "0x0*$addr" model_dump.yml || echo "  (not found as a function entry)"
+            done
+            echo ""
+            echo "=== Function count ==="
+            cat function_count.txt
+            echo ""
+            echo "=== All function entries in 0x09000000-0x09100000 (known-interesting neighborhood) ==="
+            grep -oE '"0x0?9[0-9a-f]{6}:Code_[a-z0-9_]+"' model_dump.yml | sort -u || echo "  (none found / pattern mismatch - see raw dump)"
+          } > revng_findings.txt
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: revng-results
+          path: |
+            model.yml
+            model_dump.yml
+            revng_findings.txt
+            import.log
+            autoanalysis.log
+          if-no-files-found: warn
+
+      - name: Commit results to the repo
+        run: |
+          mkdir -p Revng-Analysis-Data
+          cp revng_findings.txt Revng-Analysis-Data/revng_findings-$(date +%Y%m%d-%H%M%S).txt 2>/dev/null || true
+          # model_dump.yml can be very large for a 330MB binary - only
+          # commit it if it's under a sane size, otherwise leave it as
+          # a workflow artifact only (downloadable from the Actions run).
+          if [ -f model_dump.yml ] && [ "$(stat -c%s model_dump.yml 2>/dev/null || echo 999999999)" -lt 20000000 ]; then
+            cp model_dump.yml Revng-Analysis-Data/model_dump-$(date +%Y%m%d-%H%M%S).yml
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Revng-Analysis-Data/ || true
+          if ! git diff --cached --quiet; then
+            git commit -m "revng Analyze: auto-commit results (run ${{ github.run_id }})"
+            git push origin HEAD:main
+          else
+            echo "No changes to commit."
+          fi
