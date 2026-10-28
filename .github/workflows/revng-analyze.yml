@@ -40,8 +40,21 @@ jobs:
 
       - name: revng doctor / sanity check
         run: |
-          revng version || true
-          revng --help || true
+          {
+            echo "=== which revng ==="
+            which revng || true
+            echo "=== revng --help ==="
+            revng --help || true
+            echo "=== revng version ==="
+            revng version || true
+            echo "=== revng model --help ==="
+            revng model --help || true
+            echo "=== revng artifact --help ==="
+            revng artifact --help || true
+            echo "=== ls -la \$PWD/revng (install dir) ==="
+            ls -la "$PWD/revng" || true
+          } > revng_cli_discovery.log 2>&1
+          cat revng_cli_discovery.log
 
       - name: Import binary into a revng model
         run: |
@@ -123,7 +136,7 @@ jobs:
           # Debug logs - small, always commit directly (not just as a
           # workflow artifact, which this project can't reliably fetch
           # back from outside GitHub Actions).
-          for log in import.log analyze_help.log autoanalysis.log workdir_layout.log model_resolution.log; do
+          for log in revng_cli_discovery.log import.log analyze_help.log autoanalysis.log workdir_layout.log model_resolution.log; do
             [ -f "$log" ] && cp "$log" "Revng-Analysis-Data/${log%.log}-$STAMP.log"
           done
           # model_dump.yml can be very large for a 330MB binary - only
