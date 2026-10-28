@@ -49,8 +49,14 @@ jobs:
             revng version || true
             echo "=== revng model --help ==="
             revng model --help || true
-            echo "=== revng artifact --help ==="
-            revng artifact --help || true
+            echo "=== revng project --help ==="
+            revng project --help || true
+            echo "=== revng quick --help ==="
+            revng quick --help || true
+            echo "=== revng pipeline --help ==="
+            revng pipeline --help || true
+            echo "=== revng model import --help ==="
+            revng model import --help || true
             echo "=== ls -la \$PWD/revng (install dir) ==="
             ls -la "$PWD/revng" || true
           } > revng_cli_discovery.log 2>&1
